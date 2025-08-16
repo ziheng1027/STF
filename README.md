@@ -1,18 +1,19 @@
 # STF
-时空预测: 一个简单框架 - 初学者的学习记录
+时空预测: 初学者的学习输出
 
 ## 数据集
 ### MovingMNIST
-- 下载：Data\download_moving_mnist.sh脚本
+- 下载：Data\download_moving_mnist.sh
 ### TaxiBJ
-- 下载：Data\download_taxibj.sh脚本
+- 下载：Data\download_taxibj.sh
 
 ## 模型
 - UNet
 - SmaAt-UNet
 - PhyDNet
-- MLPMixer
-- ConvMixer
-- ConvNext
+- MLPMixer*
+- ConvMixer*
+- ConvNeXt*
 - SimVP
-- STLight
+- Tau*
+- STLight*
