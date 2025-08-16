@@ -3,8 +3,9 @@ from tabulate import tabulate
 
 class Logger:
     """训练/测试日志记录器"""
-    def __init__(self, log_file="train.log"):
-        self.logger = logging.getLogger()
+    def __init__(self, model_name):
+        log_file = f"Output/{model_name}.log"
+        self.logger = logging.getLogger(model_name)
         self.logger.setLevel(logging.INFO)
 
         # 创建文件处理器
