@@ -14,7 +14,7 @@ class PhyCell_Unit(nn.Module):
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
         
-        # phyconv计算偏导数,两层卷积
+        # 计算偏导数
         self.phyconv = nn.Sequential(
             nn.Conv2d(
                 in_channels=input_dim,
@@ -208,6 +208,7 @@ class DownConv(nn.Module):
             nn.GroupNorm(16, out_channels),
             nn.LeakyReLU(0.2, inplace=True),
         )
+
     def forward(self, input):
         return self.conv(input)
     
@@ -300,7 +301,6 @@ class PRDecoder(nn.Module):
         x = self.conv2(x)
         return x
 
-
 def _apply_axis_left_dot(x, mats):
     assert x.dim() == len(mats)+1
     sizex = x.size()
@@ -332,25 +332,20 @@ class _MK(nn.Module):
             self.register_buffer('_invM'+str(j), torch.from_numpy(invM[-1]))
             j += 1
 
-
     @property
     def M(self):
         return list(self._buffers['_M'+str(j)] for j in range(self.dim()))
-
 
     @property
     def invM(self):
         return list(self._buffers['_invM'+str(j)] for j in range(self.dim()))
 
-
     def size(self):
         return self._size
     
-
     def dim(self):
         return self._dim
     
-
     def _packdim(self, x):
         assert x.dim() >= self.dim()
         if x.dim() == self.dim():
@@ -366,6 +361,7 @@ class _MK(nn.Module):
 class M2K(_MK):
     def __init__(self, shape):
         super(M2K, self).__init__(shape)
+
     def forward(self, m):
         sizem = m.size()
         m = self._packdim(m)
@@ -377,6 +373,7 @@ class M2K(_MK):
 class K2M(_MK):
     def __init__(self, shape):
         super(K2M, self).__init__(shape)
+
     def forward(self, k):
         sizek = k.size()
         k = self._packdim(k)
@@ -384,25 +381,24 @@ class K2M(_MK):
         k = k.view(sizek)
         return k
 
-    
 def tensordot(a,b,dim):
-    l = lambda x,y:x*y  # 辅助函数，计算乘积
+    l = lambda x,y:x*y
     if isinstance(dim,int):
         # 处理整数维度参数的情况
         a = a.contiguous()
         b = b.contiguous()
         sizea = a.size()
         sizeb = b.size()
-        sizea0 = sizea[:-dim]  # a不参与收缩的维度
-        sizea1 = sizea[-dim:]   # a参与收缩的维度
-        sizeb0 = sizeb[:dim]    # b参与收缩的维度
-        sizeb1 = sizeb[dim:]    # b不参与收缩的维度
-        N = reduce(l, sizea1, 1)  # 计算收缩维度总大小
+        sizea0 = sizea[:-dim]
+        sizea1 = sizea[-dim:]
+        sizeb0 = sizeb[:dim]
+        sizeb1 = sizeb[dim:]
+        N = reduce(l, sizea1, 1)
         assert reduce(l, sizeb0, 1) == N  # 确保a和b的收缩维度匹配
     else:
         # 处理元组维度参数的情况
-        adims = dim[0]  # a的收缩维度
-        bdims = dim[1]  # b的收缩维度
+        adims = dim[0]
+        bdims = dim[1]
         adims = [adims,] if isinstance(adims, int) else adims
         bdims = [bdims,] if isinstance(bdims, int) else bdims
         
@@ -424,11 +420,11 @@ def tensordot(a,b,dim):
 
         sizea = a.size()
         sizeb = b.size()
-        sizea0 = sizea[:-len(adims)]  # a不参与收缩的维度
-        sizea1 = sizea[-len(adims):]  # a参与收缩的维度
-        sizeb0 = sizeb[:len(bdims)]   # b参与收缩的维度
-        sizeb1 = sizeb[len(bdims):]   # b不参与收缩的维度
-        N = reduce(l, sizea1, 1)      # 计算收缩维度总大小
+        sizea0 = sizea[:-len(adims)]
+        sizea1 = sizea[-len(adims):]
+        sizeb0 = sizeb[:len(bdims)]
+        sizeb1 = sizeb[len(bdims):]
+        N = reduce(l, sizea1, 1)
         assert reduce(l, sizeb0, 1) == N  # 确保a和b的收缩维度匹配
     
     # 执行矩阵乘法并恢复形状
