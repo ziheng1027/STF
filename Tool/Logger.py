@@ -3,8 +3,8 @@ from tabulate import tabulate
 
 class Logger:
     """训练/测试日志记录器"""
-    def __init__(self, model_name):
-        log_file = f"Output/{model_name}.log"
+    def __init__(self, model_name, dir_log):
+        log_file = f"{dir_log}/{model_name}.log"
         self.logger = logging.getLogger(model_name)
         self.logger.setLevel(logging.INFO)
 
