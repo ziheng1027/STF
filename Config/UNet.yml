@@ -6,7 +6,7 @@ model:
   bilinear: true
 
 # 数据集配置
-dataset: Moving_MNIST
+dataset: MovingMNIST
 
 # 训练配置
 train:
@@ -14,3 +14,9 @@ train:
   lr: 0.001
   optimizer: Adam
   scheduler: ReduceLROnPlateau
+  resume_from: 
+
+# 测试配置
+test:
+  model_path: 
+  save_interval: 10
