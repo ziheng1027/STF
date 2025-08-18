@@ -8,8 +8,8 @@ from Tool.Utils import save_test_samples
 
 
 class Trainer_DMF(Trainer_Base):
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, datasets_config):
+        super().__init__(config, datasets_config)
 
     def train_batch(self, data_batch):
         input, target = data_batch
