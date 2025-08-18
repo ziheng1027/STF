@@ -29,14 +29,10 @@ class Logger:
         """记录信息级别日志"""
         self.logger.info(message)
 
-    def log_metrics(self, metrics, epoch):
+    def log_metrics(self, metrics):
         """以表格形式记录评估指标"""
-        headers = ["Metric", "Value"]
-        data = [(key, value) for key, value in metrics.items()]
-        
-        # 如果有epoch信息, 添加到表格中
-        if epoch is not None:
-            data.insert(0, ("Epoch", epoch))
-        
+        # 指标名称作为表头
+        headers = list(metrics.keys())
+        data = [list(metrics.values())]
         table = tabulate(data, headers=headers, tablefmt="grid")
         self.logger.info("\n" + table)
