@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from Tool.Logger import Logger
 
+
 class Trainer_Base:
     """训练器基类"""
     def __init__(self, config):
@@ -77,10 +78,10 @@ class Trainer_Base:
         """集中创建所需目录"""
         dirs = {
             "root": "./Output",
-            "checkpoint": "./Output/Checkpoint",
-            "log": "./Output/Log",
-            "visualization": "./Output/Visualization",
-            "result": "./Output/Result"
+            "checkpoint": f"./Output/Checkpoint/{self.config['dataset']}",
+            "log": f"./Output/Log/{self.config['dataset']}",
+            "visualization": f"./Output/Visualization/{self.config['dataset']}",
+            "sample": f"./Output/Sample/{self.config['dataset']}"
         }
         for dir in dirs.values():
             os.makedirs(dir, exist_ok=True)
@@ -102,6 +103,8 @@ class Trainer_Base:
         }
         checkpoint_path = f"{self.dirs['checkpoint']}/{self.model_name}_epoch{epoch}_loss{val_loss}.pt"
         torch.save(checkpoint, checkpoint_path)
+
+        return checkpoint_path
 
     def load_checkpoint(self, checkpoint_path):
         """加载模型检查点, 断点续训"""
@@ -133,7 +136,6 @@ class Trainer_Base:
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model.load_state_dict(checkpoint["model_state_dict"])
-        self.model.eval()
 
         self.logger.info(f"加载模型权重成功, val_loss: {self.val_loss}, path: {checkpoint_path}")
 
@@ -151,10 +153,6 @@ class Trainer_Base:
 
     def evaluate_batch(self, data_batch, mode="val"):
         """评估一个batch"""
-        pass
-
-    def evaluate_epoch(self, epoch, mode="val"):
-        """评估一个epoch"""
         pass
 
     def validate(self):
