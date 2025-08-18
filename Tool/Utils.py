@@ -3,6 +3,14 @@ import torch
 import numpy as np
 
 
+def get_trainer(model_name, config, datasets_config):
+    try:
+        module_name = f"Trainer.Trainer_{model_name}"
+        module = __import__(module_name, fromlist=["Trainer"])
+        return module.Trainer(config, datasets_config)
+    except ImportError:
+        raise ValueError(f"未找到Trainer: {model_name}")
+
 def save_test_samples(idx, input, target, output, model_name, sample_dir, interval):
     """保存模型输出样本"""
     batch_size = input.shape[0]
