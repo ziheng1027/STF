@@ -1,4 +1,4 @@
-# 模型配置
+# 模型参数
 model:
   in_channels: 10
   out_channels: 1
@@ -7,10 +7,10 @@ model:
   num_kernel: 2
   reduction_ratio: 16
 
-# 数据集配置
+# 数据集名称
 dataset: Moving_MNIST
 
-# 训练配置
+# 训练参数
 train:
   epochs: 200
   lr: 0.001
@@ -18,7 +18,7 @@ train:
   scheduler: ReduceLROnPlateau
   resume_from:
 
-# 测试配置
+# 测试参数
 test:
   model_path: 
   save_interval: 10

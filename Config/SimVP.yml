@@ -1,4 +1,4 @@
-# 模型配置
+# 模型参数
 model:
   input_shape: [10, 1, 128, 128]
   hid_channels_S: 64
@@ -8,10 +8,10 @@ model:
   inception_kernels: [3, 5, 7, 11]
   groups: 8
 
-# 数据集配置
+# 数据集名称
 dataset: Moving_MNIST
 
-# 训练配置
+# 训练参数
 train:
   epochs: 200
   lr: 0.01
@@ -19,7 +19,7 @@ train:
   scheduler: OneCycleLR
   resume_from:
 
-# 测试配置
+# 测试参数
 test:
   model_path: 
   save_interval: 10
