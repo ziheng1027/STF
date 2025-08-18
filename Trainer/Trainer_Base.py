@@ -9,8 +9,9 @@ from Tool.Logger import Logger
 
 class Trainer_Base:
     """训练器基类"""
-    def __init__(self, config):
+    def __init__(self, config, datasets_config):
         self.config = config
+        self.datasets_config = datasets_config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.dirs = self.make_dirs()
         self.model, self.model_name = self.get_model()
@@ -26,7 +27,15 @@ class Trainer_Base:
 
     def get_dataloader(self, dataset_name):
         """获取数据加载器"""
-        pass
+        dataset_config = self.datasets_config[dataset_name]
+        if dataset_name == "MovingMNIST":
+            from Dataset.MovingMNIST import get_dataloader
+            return get_dataloader(**dataset_config)
+        elif dataset_name == "TaxiBJ":
+            from Dataset.TaxiBJ import get_dataloader
+            return get_dataloader(**dataset_config)
+        else:
+            raise ValueError(f"不支持的数据集: {dataset_name}")
 
     def get_optimizer(self, optimizer_name):
         """获取优化器"""
