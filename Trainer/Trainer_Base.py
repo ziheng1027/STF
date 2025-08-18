@@ -19,7 +19,7 @@ class Trainer_Base:
         self.optimizer = self.get_optimizer(config['train']['optimizer'])
         self.scheduler = self.get_scheduler(config['train']['scheduler'])
         self.criterion = self.get_criterion()
-        self.logger = Logger(self.model_name)
+        self.logger = Logger(self.model_name, self.dirs["log"])
 
     def get_model(self):
         """获取模型"""
