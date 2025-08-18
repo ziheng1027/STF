@@ -1,0 +1,17 @@
+# 数据集配置
+MovingMNIST:
+  data_path: "Data/MovingMNIST/train-images-idx3-ubyte.gz"
+  input_frames: 10
+  output_frames: 10
+  use_augment: False
+  batch_size_train: 16
+  batch_size_val: 4
+  num_workers: 4
+
+TaxiBJ:
+  data_path: "Data/TaxiBJ/taxibj.npz"
+  use_augment: False
+  batch_size_train: 16
+  batch_size_val: 4
+  num_workers: 4
+
