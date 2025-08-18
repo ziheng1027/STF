@@ -57,6 +57,17 @@ class Trainer_Base:
             raise ValueError(f"不支持的scheduler: {scheduler_name}")
         
         return scheduler
+    
+    def update_scheduler(self, val_loss=None):
+        """更新学习率调度器"""
+        if isinstance(self.scheduler, torch.optim.lr_scheduler.StepLR):
+            self.scheduler.step()
+        elif isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
+            self.scheduler.step()
+        elif isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            if val_loss is None:
+                raise ValueError("请提供val_loss以更新ReduceLROnPlateau")
+            self.scheduler.step(val_loss)
 
     def get_criterion(self):
         """获取损失函数"""
