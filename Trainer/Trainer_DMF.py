@@ -8,8 +8,8 @@ from Tool.Utils import save_test_samples
 
 
 class Trainer_DMF(Trainer_Base):
-    def __init__(self, config, datasets_config):
-        super().__init__(config, datasets_config)
+    def __init__(self, config, datasets_config, dataset_name):
+        super().__init__(config, datasets_config, dataset_name)
 
     def train_batch(self, data_batch):
         input, target = data_batch
@@ -21,7 +21,7 @@ class Trainer_DMF(Trainer_Base):
         self.optimizer.step()
 
         # OneCycleLR需要在每个batch后更新学习率
-        self.update_scheduler()
+        self.update_scheduler(is_batch_update=True)
         
         return loss.item()
     
@@ -40,7 +40,7 @@ class Trainer_DMF(Trainer_Base):
 
         # StepLR, ReduceLROnPlateau需要在每个epoch后更新学习率
         val_loss = self.validate()
-        self.update_scheduler(val_loss)
+        self.update_scheduler(val_loss, is_batch_update=False)
 
         return train_loss, val_loss
 
@@ -84,7 +84,7 @@ class Trainer_DMF(Trainer_Base):
             for data_batch in pbar:
                 loss = self.evaluate_batch(data_batch, mode="val")
                 losses.append(loss)
-                pbar.set_postfix_str(f"loss: {loss.item():.4f}")
+                pbar.set_postfix_str(f"loss: {loss:.4f}")
 
         return np.mean(losses)
 
@@ -100,7 +100,7 @@ class Trainer_DMF(Trainer_Base):
             for data_batch in pbar:
                 loss, metrics_batch, input, target, output = self.evaluate_batch(data_batch, mode="test")
                 losses.append(loss)
-                pbar.set_postfix_str(f"loss: {loss.item():.4f}")
+                pbar.set_postfix_str(f"loss: {loss:.4f}")
                 
                 for key in metrics:
                     metrics[key].append(metrics_batch[key])

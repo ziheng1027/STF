@@ -9,16 +9,19 @@ from Tool.Logger import Logger
 
 class Trainer_Base:
     """训练器基类"""
-    def __init__(self, config, datasets_config):
-        self.config = config
-        self.datasets_config = datasets_config
+    def __init__(self, config, datasets_config, dataset_name):
+        self.config = config    # 训练配置
+        self.datasets_config = datasets_config  # 所有数据集的配置
+        self.dataset_name = dataset_name
+
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.dirs = self.make_dirs()
         self.model, self.model_name = self.get_model()
-        self.train_loader, self.val_loader, self.test_loader = self.get_dataloader(config['dataset'])
+        self.train_loader, self.val_loader, self.test_loader = self.get_dataloader(dataset_name)
         self.optimizer = self.get_optimizer(config['train']['optimizer'])
         self.scheduler = self.get_scheduler(config['train']['scheduler'])
         self.criterion = self.get_criterion()
+        
+        self.dirs = self.make_dirs()
         self.logger = Logger(self.model_name, self.dirs["log"])
 
     def get_model(self):
@@ -68,16 +71,19 @@ class Trainer_Base:
         
         return scheduler
     
-    def update_scheduler(self, val_loss=None):
+    def update_scheduler(self, val_loss=None, is_batch_update=False):
         """更新学习率调度器"""
         if isinstance(self.scheduler, torch.optim.lr_scheduler.StepLR):
-            self.scheduler.step()
+            if not is_batch_update:
+                self.scheduler.step()
         elif isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
-            self.scheduler.step()
+            if is_batch_update:
+                self.scheduler.step()
         elif isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            if val_loss is None:
-                raise ValueError("请提供val_loss以更新ReduceLROnPlateau")
-            self.scheduler.step(val_loss)
+            if not is_batch_update:
+                if val_loss is None:
+                    raise ValueError("请提供val_loss以更新ReduceLROnPlateau")
+                self.scheduler.step(val_loss)
 
     def get_criterion(self):
         """获取损失函数"""
@@ -87,10 +93,10 @@ class Trainer_Base:
         """集中创建所需目录"""
         dirs = {
             "root": "./Output",
-            "checkpoint": f"./Output/Checkpoint/{self.config['dataset']}",
-            "log": f"./Output/Log/{self.config['dataset']}",
-            "visualization": f"./Output/Visualization/{self.config['dataset']}",
-            "sample": f"./Output/Sample/{self.config['dataset']}"
+            "checkpoint": f"./Output/Checkpoint/{self.dataset_name}",
+            "log": f"./Output/Log/{self.dataset_name}",
+            "visualization": f"./Output/Visualization/{self.dataset_name}/{self.model_name}",
+            "sample": f"./Output/Sample/{self.dataset_name}/{self.model_name}"
         }
         for dir in dirs.values():
             os.makedirs(dir, exist_ok=True)
@@ -110,7 +116,7 @@ class Trainer_Base:
             "random_torch": torch.get_rng_state(),
             "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
         }
-        checkpoint_path = f"{self.dirs['checkpoint']}/{self.model_name}_epoch{epoch}_loss{val_loss}.pt"
+        checkpoint_path = f"{self.dirs['checkpoint']}/{self.model_name}_epoch{epoch}_loss{val_loss:.5f}.pt"
         torch.save(checkpoint, checkpoint_path)
 
         return checkpoint_path
@@ -120,7 +126,7 @@ class Trainer_Base:
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"未找到检查点文件: {checkpoint_path}")
         
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -134,7 +140,7 @@ class Trainer_Base:
         if torch.cuda.is_available():
             torch.cuda.set_rng_state_all(checkpoint["cuda"])
 
-        self.logger.info(f"加载检查点成功, epoch: {self.current_epoch}, val_loss: {self.val_loss}, path: {checkpoint_path}")
+        self.logger.info(f"Checkpoint loaded successfully! epoch: {self.current_epoch}, val_loss: {self.val_loss}, path: {checkpoint_path}")
 
         return current_epoch
 
@@ -143,10 +149,10 @@ class Trainer_Base:
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"未找到检查点文件: {checkpoint_path}")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint["model_state_dict"])
 
-        self.logger.info(f"加载模型权重成功, val_loss: {self.val_loss}, path: {checkpoint_path}")
+        self.logger.info(f"Model weights loaded successfully! path: {checkpoint_path}")
 
     def train_batch(self, data_batch):
         """训练一个batch"""
