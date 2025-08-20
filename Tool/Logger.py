@@ -17,7 +17,7 @@ class Logger:
         console_handler.setLevel(logging.INFO)
 
         # 设置日志格式
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
