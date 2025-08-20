@@ -53,7 +53,7 @@ def visualize_base(idx, input, target, output):
         if t == 0:
             plt.ylabel("output", rotation=0, labelpad=20, ha='right', va='center')
     
-    plt.suptitle(f"-Sample {idx}-", y=0.98, fontsize=16)
+    plt.suptitle(f"|-Sample {idx}-|", y=0.98, fontsize=16)
     plt.tight_layout()
     plt.show()
 
