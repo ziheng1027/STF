@@ -10,7 +10,7 @@ def get_trainer(model_name, dataset_name, config, datasets_config):
         module = __import__(module_name, fromlist=["Trainer"])
         return module.Trainer(config, datasets_config, dataset_name)
     except ImportError:
-        raise ValueError(f"未找到Trainer: {model_name}")
+        raise ValueError(f"未找到Trainer: {module_name}")
 
 def save_test_samples(idx, input, target, output, model_name, sample_dir, interval):
     """保存模型输出样本"""
