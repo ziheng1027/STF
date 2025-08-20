@@ -1,0 +1,19 @@
+# 模型参数
+model:
+  in_channels: 10
+  out_channels: 1
+  out_frames: 10
+  bilinear: true
+
+# 训练参数
+train:
+  epochs: 200
+  lr: 0.001
+  optimizer: Adam
+  scheduler: ReduceLROnPlateau
+  resume_from: 
+
+# 测试参数
+test:
+  model_path: 
+  save_interval: 10

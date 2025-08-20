@@ -1,0 +1,19 @@
+# 模型参数
+model:
+  in_channels: 8
+  out_channels: 2
+  out_frames: 4
+  bilinear: true
+
+# 训练参数
+train:
+  epochs: 200
+  lr: 0.001
+  optimizer: Adam
+  scheduler: ReduceLROnPlateau
+  resume_from: 
+
+# 测试参数
+test:
+  model_path: Output\Checkpoint\TaxiBJ\UNet_epoch2_loss0.0018966884799301623.pt
+  save_interval: 10
