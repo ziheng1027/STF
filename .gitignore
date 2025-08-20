@@ -554,4 +554,4 @@ Temporary Items
 !.github
 Data/*
 !Data/*.sh
-
+Output/*
