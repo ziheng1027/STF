@@ -52,6 +52,13 @@ def visualize_base(idx, input, target, output):
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("output", rotation=0, labelpad=20, ha='right', va='center')
+    # error
+    for t in range(T):
+        plt.subplot(3, T, t+1+3*T)
+        plt.imshow(output[t, 0, :, :] - target[t, 0, :, :])
+        plt.tick_params(axis='both', which='both', length=0)
+        if t == 0:
+            plt.ylabel("error", rotation=0, labelpad=20, ha='right', va='center')
     
     plt.suptitle(f"|-Sample {idx}-|", y=0.98, fontsize=16)
     plt.tight_layout()
