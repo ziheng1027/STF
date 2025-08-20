@@ -4,14 +4,14 @@ MovingMNIST:
   input_frames: 10
   output_frames: 10
   use_augment: False
-  batch_size_train: 4
-  batch_size_val: 1
+  batch_size_train: 16
+  batch_size_val: 4
   num_workers: 4
 
 TaxiBJ:
   data_path: "Data/TaxiBJ/taxibj.npz"
   use_augment: False
-  batch_size_train: 16
+  batch_size_train: 32
   batch_size_val: 4
   num_workers: 0
 
