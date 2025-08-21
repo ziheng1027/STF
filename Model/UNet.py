@@ -3,24 +3,17 @@ from Module.UNet import DoubleConv, Down, Up, OutConv
 
 
 class UNet(nn.Module):
-    def __init__(self, in_channels, out_channels, out_frames, bilinear=False):
-        """
-        初始化U-Net
-        
-        参数:
-            n_channels (int): 输入通道数
-            n_classes (int): 输出类别数
-            bilinear (bool): 是否使用双线性插值进行上采样
-        """
+    def __init__(self, in_channels, out_channels, in_frames, out_frames, bilinear=False):
         super().__init__()
 
-        self.n_channels = in_channels  # 输入图像的通道数
+        self.n_channels = in_channels  # 输入的通道数
         self.n_classes = out_channels  # 输出的通道数
+        self.in_frames = in_frames     # 输入的帧数
         self.out_frames = out_frames   # 输出的帧数
         self.bilinear = bilinear       # 上采样方式
         
         # 初始的双重卷积
-        self.inconv = DoubleConv(in_channels, 64)
+        self.inconv = DoubleConv(in_channels * in_frames, 64)
         
         # 下采样路径（编码器）
         self.down1 = Down(64, 128)

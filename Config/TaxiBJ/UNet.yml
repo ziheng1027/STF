@@ -1,7 +1,8 @@
 # 模型参数
 model:
-  in_channels: 8
+  in_channels: 2
   out_channels: 2
+  in_frames: 4
   out_frames: 4
   bilinear: true
 

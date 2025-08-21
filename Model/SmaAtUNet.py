@@ -4,18 +4,19 @@ from Module.Attention.CBAM import CBAM
 
 
 class SmaAt_UNet(nn.Module):
-    def __init__(self, in_channels, out_channels, out_frames=10, bilinear=True, num_kernel=2, reduction_ratio=16):
+    def __init__(self, in_channels, out_channels, in_frames, out_frames, bilinear=True, num_kernel=2, reduction_ratio=16):
         super().__init__()
 
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.in_frames = in_frames
         self.out_frames = out_frames
         self.num_kernel = num_kernel
         self.bilinear = bilinear
         self.reduction_ratio = reduction_ratio
 
         # 编码器
-        self.inconv = DoubleConvDS(self.in_channels, 64, num_kernel=num_kernel)
+        self.inconv = DoubleConvDS(in_channels * in_frames, 64, num_kernel=num_kernel)
         self.cbam1 = CBAM(64, reduction_ratio)
         self.down1 = DownDS(64, 128, num_kernel=num_kernel)
         self.cbam2 = CBAM(128, reduction_ratio)
