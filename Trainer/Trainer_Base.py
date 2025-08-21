@@ -5,6 +5,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from Tool.Logger import Logger
+from Tool.EarlyStopping import EarlyStopping
 
 
 class Trainer_Base:
@@ -14,12 +15,13 @@ class Trainer_Base:
         self.datasets_config = datasets_config  # 所有数据集的配置
         self.dataset_name = dataset_name
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model, self.model_name = self.get_model()
         self.train_loader, self.val_loader, self.test_loader = self.get_dataloader(dataset_name)
-        self.optimizer = self.get_optimizer(config['train']['optimizer'])
-        self.scheduler = self.get_scheduler(config['train']['scheduler'])
+        self.optimizer = self.get_optimizer(config["train"]["optimizer"])
+        self.scheduler = self.get_scheduler(config["train"]["scheduler"])
         self.criterion = self.get_criterion()
+        self.early_stopping = EarlyStopping(config["train"]["patience"])
         
         self.dirs = self.make_dirs()
         self.logger = Logger(self.model_name, self.dirs["log"])
@@ -43,11 +45,11 @@ class Trainer_Base:
     def get_optimizer(self, optimizer_name):
         """获取优化器"""
         if optimizer_name == "Adam":
-            optimizer = optim.Adam(self.model.parameters(), lr=self.config['train'].get("lr", 0.002))
+            optimizer = optim.Adam(self.model.parameters(), lr=self.config["train"].get("lr", 0.002))
         elif optimizer_name == "AdamW":
-            optimizer = optim.AdamW(self.model.parameters(), lr=self.config['train'].get("lr", 0.002))
+            optimizer = optim.AdamW(self.model.parameters(), lr=self.config["train"].get("lr", 0.002))
         elif optimizer_name == "SGD":
-            optimizer = optim.SGD(self.model.parameters(), lr=self.config['train'].get("lr", 0.002), momentum=0.9)
+            optimizer = optim.SGD(self.model.parameters(), lr=self.config["train"].get("lr", 0.002), momentum=0.9)
         else:
             raise ValueError(f"不支持的optimizer: {optimizer_name}")
         
@@ -56,14 +58,14 @@ class Trainer_Base:
     def get_scheduler(self, scheduler_name):
         """获取学习率调度器"""
         if scheduler_name == "StepLR":
-            scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config['train'].get("step_size", 10))
+            scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config["train"].get("step_size", 10))
         elif scheduler_name == "ReduceLROnPlateau":
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=5)
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=0.1, patience=5)
         elif scheduler_name == "OneCycleLR":
             scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
-                max_lr=self.config['train'].get("max_lr", 0.1),
-                epochs=self.config['train'].get("epochs", 100),
+                max_lr=self.config["train"].get("max_lr", 0.1),
+                epochs=self.config["train"].get("epochs", 100),
                 steps_per_epoch=len(self.train_loader)
             )
         else:
@@ -116,7 +118,7 @@ class Trainer_Base:
             "random_torch": torch.get_rng_state(),
             "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
         }
-        checkpoint_path = f"{self.dirs['checkpoint']}/{self.model_name}_epoch{epoch}_loss{val_loss:.5f}.pt"
+        checkpoint_path = f"{self.dirs["checkpoint"]}/{self.model_name}_epoch{epoch}_loss{val_loss:.5f}.pt"
         torch.save(checkpoint, checkpoint_path)
 
         return checkpoint_path

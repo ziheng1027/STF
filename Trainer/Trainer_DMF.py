@@ -57,6 +57,9 @@ class Trainer_DMF(Trainer_Base):
         for epoch in range(start_epoch, self.config["train"]["epochs"] + 1):
             train_loss, val_loss = self.train_epoch(epoch)
             self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+            if self.early_stopping.check(val_loss):
+                self.logger.info(f"Early stopping at epoch {epoch}!")
+                break
             if val_loss < best_val_loss:
                 if best_checkpoint_path is not None and os.path.exists(best_checkpoint_path):
                     os.remove(best_checkpoint_path)
