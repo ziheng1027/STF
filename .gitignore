@@ -552,6 +552,8 @@ Temporary Items
 !.gitignore
 !.gitsubmodules
 !.github
+.vscode
 Data/*
 !Data/*.sh
 Output/*
+
