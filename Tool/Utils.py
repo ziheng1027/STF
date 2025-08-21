@@ -33,28 +33,28 @@ def visualize_base(idx, input, target, output):
     plt.figure(figsize=(15, 6))
     # input
     for t in range(T):
-        plt.subplot(3, T, t+1)
+        plt.subplot(4, T, t+1)
         plt.imshow(input[t, 0, :, :])
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("input", rotation=0, labelpad=20, ha='right', va='center')
     # target
     for t in range(T):
-        plt.subplot(3, T, t+1+T)
+        plt.subplot(4, T, t+1+T)
         plt.imshow(target[t, 0, :, :])
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("target", rotation=0, labelpad=20, ha='right', va='center')
     # output
     for t in range(T):
-        plt.subplot(3, T, t+1+2*T)
+        plt.subplot(4, T, t+1+2*T)
         plt.imshow(output[t, 0, :, :])
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("output", rotation=0, labelpad=20, ha='right', va='center')
     # error
     for t in range(T):
-        plt.subplot(3, T, t+1+3*T)
+        plt.subplot(4, T, t+1+3*T)
         plt.imshow(output[t, 0, :, :] - target[t, 0, :, :])
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
