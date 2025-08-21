@@ -3,7 +3,7 @@ from Module.SmaAtUNet import DoubleConvDS, DownDS, UpDS, OutConv
 from Module.Attention.CBAM import CBAM
 
 
-class SmaAt_UNet(nn.Module):
+class SmaAtUNet(nn.Module):
     def __init__(self, in_channels, out_channels, in_frames, out_frames, bilinear=True, num_kernel=2, reduction_ratio=16):
         super().__init__()
 
