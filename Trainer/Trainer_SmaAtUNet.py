@@ -6,6 +6,6 @@ class Trainer(Trainer_DMF):
         super().__init__(config, datasets_config, dataset_name)
 
     def get_model(self):
-        from Model.SmaAtUNet import SmaAt_UNet
-        model = SmaAt_UNet(**self.config['model'])
+        from Model.SmaAtUNet import SmaAtUNet
+        model = SmaAtUNet(**self.config['model'])
         return model.to(self.device), model.__class__.__name__

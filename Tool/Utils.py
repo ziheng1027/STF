@@ -30,7 +30,7 @@ def save_test_samples(idx, input, target, output, model_name, sample_dir, interv
 def visualize_base(idx, input, target, output):
     """可视化"""
     T, C, _, _ = input.shape
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(15, 9))
     # input
     for t in range(T):
         plt.subplot(4, T, t+1)
@@ -38,6 +38,7 @@ def visualize_base(idx, input, target, output):
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("input", rotation=0, labelpad=20, ha='right', va='center')
+        plt.axis('off')
     # target
     for t in range(T):
         plt.subplot(4, T, t+1+T)
