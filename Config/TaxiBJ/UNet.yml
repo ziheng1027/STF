@@ -15,5 +15,5 @@ train:
 
 # 测试参数
 test:
-  model_path: Output\Checkpoint\TaxiBJ\UNet_epoch2_loss0.0018966884799301623.pt
+  model_path: 
   save_interval: 10
