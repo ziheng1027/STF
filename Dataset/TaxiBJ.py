@@ -24,9 +24,15 @@ class TaxiBJDataset(Dataset):
         if is_train:
             self.inputs = data['X_train']
             self.targets = data['Y_train']
+            # 从(-1,1)映射到(0,1)
+            self.inputs = (self.inputs + 1) / 2
+            self.targets = (self.targets + 1) / 2
         else:
             self.inputs = data['X_test']
             self.targets = data['Y_test']
+            # 从(-1,1)映射到(0,1)
+            self.inputs = (self.inputs + 1) / 2
+            self.targets = (self.targets + 1) / 2
     
     def augment_seq(self, taxibj_seq):
         """数据增强"""
