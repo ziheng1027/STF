@@ -6,7 +6,7 @@ from Tool.Utils import get_trainer, visualize_figure
 model_name = "UNet"
 # 使用哪个数据集？
 dataset_name = "TaxiBJ"
-# 训练模式? "train", "test" or "visualize"
+# 选择哪个模式? "train", "test" or "visualize"
 mode = "train"
 
 if __name__ == '__main__':

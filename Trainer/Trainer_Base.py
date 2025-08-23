@@ -111,6 +111,7 @@ class Trainer_Base:
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
             "criterion_state_dict": self.criterion.state_dict(),
+            "scheduler_step_count": self.scheduler._step_count if hasattr(self.scheduler, "_step_count") else 0,
             "epoch": epoch,
             "val_loss": val_loss,
             "random_python": random.getstate(),
@@ -135,12 +136,14 @@ class Trainer_Base:
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         self.criterion.load_state_dict(checkpoint["criterion_state_dict"])
         current_epoch = checkpoint["epoch"]
+        if hasattr(self.scheduler, "_step_count") and "scheduler_step_count" in checkpoint:
+            self.scheduler._step_count = checkpoint["scheduler_step_count"]
 
         random.setstate(checkpoint["random_python"])
         np.random.set_state(checkpoint["random_numpy"])
-        torch.set_rng_state(checkpoint["random_torch"].cpu())
+        torch.set_rng_state(checkpoint["random_torch"].cpu().cpu())
         if torch.cuda.is_available() and checkpoint["cuda"] is not None:
-            torch.cuda.set_rng_state_all([state.cpu() for state in checkpoint["cuda"]])
+            torch.cuda.set_rng_state_all([state.cpu() for state in [state.cpu() for state in checkpoint["cuda"]]])
 
         self.logger.info(f"Checkpoint loaded successfully! epoch: {current_epoch}, path: {checkpoint_path}")
 
