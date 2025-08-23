@@ -64,7 +64,7 @@ class Trainer_Base:
         elif scheduler_name == "OneCycleLR":
             scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
-                max_lr=self.config["train"].get("max_lr", 0.1),
+                max_lr=self.config["train"].get("max_lr", 0.05),
                 epochs=self.config["train"].get("epochs", 100),
                 steps_per_epoch=len(self.train_loader)
             )
@@ -135,14 +135,16 @@ class Trainer_Base:
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         self.criterion.load_state_dict(checkpoint["criterion_state_dict"])
         current_epoch = checkpoint["epoch"]
+        # 断点续训时, scheduler需要知道当前epoch
+        self.scheduler.last_epoch = current_epoch
 
         random.setstate(checkpoint["random_python"])
         np.random.set_state(checkpoint["random_numpy"])
-        torch.set_rng_state(checkpoint["random_torch"])
-        if torch.cuda.is_available():
-            torch.cuda.set_rng_state_all(checkpoint["cuda"])
+        torch.set_rng_state(checkpoint["random_torch"].cpu())
+        if torch.cuda.is_available() and checkpoint["cuda"] is not None:
+            torch.cuda.set_rng_state_all([state.cpu() for state in checkpoint["cuda"]])
 
-        self.logger.info(f"Checkpoint loaded successfully! epoch: {self.current_epoch}, val_loss: {self.val_loss}, path: {checkpoint_path}")
+        self.logger.info(f"Checkpoint loaded successfully! epoch: {current_epoch}, path: {checkpoint_path}")
 
         return current_epoch
 
