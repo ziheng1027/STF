@@ -35,7 +35,7 @@ class Trainer_DMF(Trainer_Base):
             loss = self.train_batch(data_batch)
             losses.append(loss)
             pbar.set_description_str(f"Epoch[{epoch}/{self.config['train']['epochs']}], Batch[{idx}/{num_batch}]")
-            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.6f}")
+            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
         train_loss = np.mean(losses)
 
         # StepLR, ReduceLROnPlateau需要在每个epoch后更新学习率
@@ -56,7 +56,7 @@ class Trainer_DMF(Trainer_Base):
 
         for epoch in range(start_epoch, self.config["train"]["epochs"] + 1):
             train_loss, val_loss = self.train_epoch(epoch)
-            self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+            self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
             if self.early_stopping.check(val_loss):
                 self.logger.info(f"Early stopping at epoch {epoch}!")
                 break
