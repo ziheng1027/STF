@@ -119,7 +119,7 @@ class Trainer_Base:
             "random_torch": torch.get_rng_state(),
             "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
         }
-        checkpoint_path = f"{self.dirs["checkpoint"]}/{self.model_name}_epoch{epoch}_loss{val_loss:.5f}.pt"
+        checkpoint_path = f"{self.dirs["checkpoint"]}/{self.model_name}_epoch{epoch}_loss{val_loss:.4f}.pt"
         torch.save(checkpoint, checkpoint_path)
 
         return checkpoint_path
