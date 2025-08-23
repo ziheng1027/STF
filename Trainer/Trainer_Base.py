@@ -40,7 +40,7 @@ class Trainer_Base:
             from Dataset.TaxiBJ import get_dataloader
             return get_dataloader(**dataset_config)
         else:
-            raise ValueError(f"不支持的数据集: {dataset_name}")
+            raise ValueError(f"不支持的Dataset: {dataset_name}")
 
     def get_optimizer(self, optimizer_name):
         """获取优化器"""
@@ -51,7 +51,7 @@ class Trainer_Base:
         elif optimizer_name == "SGD":
             optimizer = optim.SGD(self.model.parameters(), lr=self.config["train"].get("lr", 0.002), momentum=0.9)
         else:
-            raise ValueError(f"不支持的optimizer: {optimizer_name}")
+            raise ValueError(f"不支持的Optimizer: {optimizer_name}")
         
         return optimizer
     
@@ -69,7 +69,7 @@ class Trainer_Base:
                 steps_per_epoch=len(self.train_loader)
             )
         else:
-            raise ValueError(f"不支持的scheduler: {scheduler_name}")
+            raise ValueError(f"不支持的Scheduler: {scheduler_name}")
         
         return scheduler
     
@@ -126,7 +126,7 @@ class Trainer_Base:
     def load_checkpoint(self, checkpoint_path):
         """加载模型检查点, 断点续训"""
         if not os.path.exists(checkpoint_path):
-            raise FileNotFoundError(f"未找到检查点文件: {checkpoint_path}")
+            raise FileNotFoundError(f"未找到Checkpoint文件: {checkpoint_path}")
         
         checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
 
@@ -135,9 +135,6 @@ class Trainer_Base:
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         self.criterion.load_state_dict(checkpoint["criterion_state_dict"])
         current_epoch = checkpoint["epoch"]
-        # 断点续训时, scheduler需要知道当前已经训练的步数
-        if isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
-            self.scheduler.total_steps = current_epoch * len(self.train_loader)
 
         random.setstate(checkpoint["random_python"])
         np.random.set_state(checkpoint["random_numpy"])
@@ -152,7 +149,7 @@ class Trainer_Base:
     def load_model_weight(self, checkpoint_path):
         """加载模型权重, 测试模型"""
         if not os.path.exists(checkpoint_path):
-            raise FileNotFoundError(f"未找到检查点文件: {checkpoint_path}")
+            raise FileNotFoundError(f"未找到Checkpoint文件: {checkpoint_path}")
 
         checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint["model_state_dict"])
