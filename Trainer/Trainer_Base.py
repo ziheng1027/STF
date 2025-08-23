@@ -64,7 +64,7 @@ class Trainer_Base:
         elif scheduler_name == "OneCycleLR":
             scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
-                max_lr=self.config["train"].get("max_lr", 0.05),
+                max_lr=self.config["train"].get("max_lr", 0.08),
                 epochs=self.config["train"].get("epochs", 100),
                 steps_per_epoch=len(self.train_loader)
             )
@@ -135,8 +135,9 @@ class Trainer_Base:
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         self.criterion.load_state_dict(checkpoint["criterion_state_dict"])
         current_epoch = checkpoint["epoch"]
-        # 断点续训时, scheduler需要知道当前epoch
-        self.scheduler.last_epoch = current_epoch
+        # 断点续训时, scheduler需要知道当前已经训练的步数
+        if isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
+            self.scheduler.total_steps = current_epoch * len(self.train_loader)
 
         random.setstate(checkpoint["random_python"])
         np.random.set_state(checkpoint["random_numpy"])
