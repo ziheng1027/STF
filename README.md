@@ -28,5 +28,7 @@ python-3.13.5
 numpy-2.1.2  
 matplotlib-3.10.0  
 scipy-1.16.1  
+scikit-image-0.25.2
 pyyaml-6.0.2  
 tqdm-4.67.1  
+lpips-0.1.4
