@@ -3,217 +3,107 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 import warnings
 try:
-    from torchmetrics.image import LearnedPerceptualImagePatchSimilarity
-    lpips_available = True
-except ImportError:
-    lpips_available = False
-    warnings.warn("torchmetrics package not installed. Install with 'pip install torchmetrics' for LPIPS metric support.")
-
-try:
     import lpips
-    original_lpips_available = True
+    # LPIPS模型缓存
+    _lpips_cache = {}
 except ImportError:
-    original_lpips_available = False
+    lpips = None
+    warnings.warn("LPIPS package not installed. Install with 'pip install lpips' for LPIPS metric support.")
 
 
 def cal_mse(target, pred):
-    """计算MSE，支持2D-5D输入，返回单张图像的总误差"""
-    if target.ndim == 5:
-        # (B, T, C, H, W) -> 计算每个样本的总误差
-        return np.sum(np.square(target - pred), axis=(1, 2, 3, 4))
-    elif target.ndim == 4:
-        # (T, C, H, W) -> 计算序列的总误差
-        return np.sum(np.square(target - pred), axis=(0, 1, 2, 3))
-    else:
-        # 2D或3D图像
-        return np.sum(np.square(target - pred))
+    """计算均方误差, 期望输入shape为 (C, H, W)"""
+    # 计算平方误差并在所有维度上求平均
+    return np.mean(np.square(target - pred), axis=(0, 1)).sum()
 
 def cal_mae(target, pred):
-    """计算MAE，支持2D-5D输入，返回单张图像的总绝对误差"""
-    if target.ndim == 5:
-        # (B, T, C, H, W) -> 计算每个样本的总绝对误差
-        return np.sum(np.abs(target - pred), axis=(1, 2, 3, 4))
-    elif target.ndim == 4:
-        # (T, C, H, W) -> 计算序列的总绝对误差
-        return np.sum(np.abs(target - pred), axis=(0, 1, 2, 3))
-    else:
-        # 2D或3D图像
-        return np.sum(np.abs(target - pred))
+    """计算平均绝对误差, 期望输入shape为 (C, H, W)"""
+    # 计算绝对误差并在所有维度上求平均
+    return np.mean(np.abs(target - pred), axis=(0, 1)).sum()
 
 def cal_rmse(target, pred):
-    """计算RMSE"""
+    """计算均方根误差, 期望输入shape为 (C, H, W)"""
     return np.sqrt(cal_mse(target, pred))
 
 def cal_psnr(target, pred):
-    """计算PSNR，支持2D-5D输入"""
-    mse = cal_mse(target, pred)
-    if np.any(mse == 0):
-        # 处理完美重建的情况
-        return np.where(mse == 0, float('inf'), 0)
-    
+    """计算峰值信噪比, 期望输入shape为 (C, H, W)"""
+    mse = np.mean(np.square(target - pred))
+    if mse == 0:
+        return float('inf')
     # 根据图像范围确定最大像素值
-    max_pixel = 255.0 if target.max() > 1.0 else 1.0
-    
-    # 计算PSNR
-    psnr_values = 10 * np.log10((max_pixel ** 2) / mse)
-    
-    # 如果是批量数据，返回平均值
-    if target.ndim == 5:
-        return np.mean(psnr_values)
-    else:
-        return psnr_values
+    max_pixel = 255.0 if target.max() > (1.0 + 1e-6) else 1.0
+
+    return 10 * np.log10((max_pixel ** 2) / mse)
 
 def cal_ssim(target, pred):
-    """计算SSIM，支持2D-5D输入"""
+    """计算结构相似性指数, 期望输入shape为 (C, H, W)"""
     # 确定数据范围
-    data_range = 255.0 if target.max() > 1.0 else 1.0
+    data_range = 255.0 if target.max() > (1.0 + 1e-6) else 1.0
     
-    if target.ndim == 5:
-        # (B, T, C, H, W) -> 对每个样本的每个时间帧计算SSIM
-        ssim_scores = []
-        for b in range(target.shape[0]):
-            for t in range(target.shape[1]):
-                frame_target = target[b, t]
-                frame_pred = pred[b, t]
-                if frame_target.ndim == 3 and frame_target.shape[2] > 1:
-                    # 多通道图像
-                    channel_scores = []
-                    for c in range(frame_target.shape[2]):
-                        ssim_score = ssim(frame_target[..., c], frame_pred[..., c], data_range=data_range)
-                        channel_scores.append(ssim_score)
-                    ssim_scores.append(np.mean(channel_scores))
-                else:
-                    # 单通道图像
-                    ssim_score = ssim(frame_target, frame_pred, data_range=data_range)
-                    ssim_scores.append(ssim_score)
-        return np.mean(ssim_scores)
-    elif target.ndim == 4:
-        # (T, C, H, W) -> 对每个时间帧计算SSIM
-        ssim_scores = []
-        for t in range(target.shape[0]):
-            frame_target = target[t]
-            frame_pred = pred[t]
-            if frame_target.ndim == 3 and frame_target.shape[2] > 1:
-                channel_scores = []
-                for c in range(frame_target.shape[2]):
-                    ssim_score = ssim(frame_target[..., c], frame_pred[..., c], data_range=data_range)
-                    channel_scores.append(ssim_score)
-                ssim_scores.append(np.mean(channel_scores))
-            else:
-                ssim_score = ssim(frame_target, frame_pred, data_range=data_range)
-                ssim_scores.append(ssim_score)
-        return np.mean(ssim_scores)
+    # 转换为 (H, W, C) 格式用于SSIM计算
+    if target.ndim == 3:
+        target_reshaped = target.transpose(1, 2, 0)
+        pred_reshaped = pred.transpose(1, 2, 0)
     else:
-        # 2D或3D图像
-        if target.ndim == 3 and target.shape[2] > 1:
-            # 多通道图像
-            ssim_scores = []
-            for c in range(target.shape[2]):
-                ssim_score = ssim(target[..., c], pred[..., c], data_range=data_range)
-                ssim_scores.append(ssim_score)
-            return np.mean(ssim_scores)
-        else:
-            # 单通道图像
-            return ssim(target, pred, data_range=data_range)
+        raise ValueError(f"SSIM输入形状应为 (C, H, W), 但得到形状 {target.shape}")
+    
+    # 处理多通道图像
+    if target_reshaped.shape[-1] > 1:
+        channel_scores = []
+        for c in range(target_reshaped.shape[-1]):
+            ssim_score = ssim(target_reshaped[..., c], pred_reshaped[..., c], 
+                             data_range=data_range)
+            channel_scores.append(ssim_score)
+        return np.mean(channel_scores)
+    else:
+        # 单通道图像
+        return ssim(target_reshaped[..., 0], pred_reshaped[..., 0], 
+                   data_range=data_range)
 
 def cal_lpips(target, pred, net_type='alex'):
-    """计算LPIPS指标，支持2D-5D输入"""
-    if target.ndim == 5:
-        # (B, T, C, H, W) -> 对每个样本的每个时间帧计算LPIPS并取平均
-        lpips_scores = []
-        for b in range(target.shape[0]):
-            for t in range(target.shape[1]):
-                frame_target = target[b, t]
-                frame_pred = pred[b, t]
-                score = _cal_single_lpips(frame_target, frame_pred, net_type)
-                if score is not None:
-                    lpips_scores.append(score)
-        return np.mean(lpips_scores) if lpips_scores else None
-    elif target.ndim == 4:
-        # (T, C, H, W) -> 对每个时间帧计算LPIPS并取平均
-        lpips_scores = []
-        for t in range(target.shape[0]):
-            frame_target = target[t]
-            frame_pred = pred[t]
-            score = _cal_single_lpips(frame_target, frame_pred, net_type)
-            if score is not None:
-                lpips_scores.append(score)
-        return np.mean(lpips_scores) if lpips_scores else None
-    else:
-        # 2D或3D图像
-        return _cal_single_lpips(target, pred, net_type)
-
-def _cal_single_lpips(target, pred, net_type='alex'):
-    """计算单帧图像的LPIPS指标"""
-    # 优先使用torchmetrics的LPIPS实现
-    if lpips_available:
-        return _cal_lpips_torchmetrics(target, pred, net_type)
-    elif original_lpips_available:
-        return _cal_lpips_original(target, pred, net_type)
-    else:
+    """计算LPIPS指标, 期望输入shape为 (C, H, W)"""
+    if lpips is None:
         warnings.warn("LPIPS package not available. Returning None for LPIPS metric.")
         return None
-
-def _cal_lpips_torchmetrics(target, pred, net_type='alex'):
-    """使用torchmetrics的LPIPS实现"""
-    # 确保输入是3通道图像
-    if target.ndim == 2:
-        # 灰度图像转换为3通道
-        target = np.stack([target] * 3, axis=-1)
-        pred = np.stack([pred] * 3, axis=-1)
-    elif target.ndim == 3 and target.shape[2] == 1:
+    
+    # 验证输入形状
+    if target.ndim != 3:
+        raise ValueError(f"LPIPS输入形状应为 (C, H, W), 但得到形状 {target.shape}")
+    
+    # 转换为 (H, W, C) 格式
+    target_reshaped = target.transpose(1, 2, 0)
+    pred_reshaped = pred.transpose(1, 2, 0)
+    
+    # 确保图像是3通道
+    if target_reshaped.shape[-1] == 1:
         # 单通道转换为3通道
-        target = np.repeat(target, 3, axis=2)
-        pred = np.repeat(pred, 3, axis=2)
+        target_reshaped = np.repeat(target_reshaped, 3, axis=-1)
+        pred_reshaped = np.repeat(pred_reshaped, 3, axis=-1)
+    elif target_reshaped.shape[-1] == 2:
+        # 2通道转换为3通道, 复制最后一个通道
+        target_reshaped = np.concatenate([target_reshaped, target_reshaped[..., -1:]], axis=-1)
+        pred_reshaped = np.concatenate([pred_reshaped, pred_reshaped[..., -1:]], axis=-1)
+    elif target_reshaped.shape[-1] != 3:
+        # 如果不是1,2或3通道, 取前3个通道
+        target_reshaped = target_reshaped[..., :3]
+        pred_reshaped = pred_reshaped[..., :3]
     
-    # 转换为PyTorch tensor并调整格式为NCHW
-    target_tensor = torch.from_numpy(target).permute(2, 0, 1).unsqueeze(0).float()
-    pred_tensor = torch.from_numpy(pred).permute(2, 0, 1).unsqueeze(0).float()
+    # 转换为PyTorch tensor并调整格式为NCHW(N=B*T)
+    target_tensor = torch.from_numpy(target_reshaped).permute(2, 0, 1).unsqueeze(0).float()
+    pred_tensor = torch.from_numpy(pred_reshaped).permute(2, 0, 1).unsqueeze(0).float()
     
-    # 归一化到[0, 1]范围（torchmetrics LPIPS期望的范围）
-    if target.max() > 1.0:
-        target_tensor = target_tensor / 255.0
-        pred_tensor = pred_tensor / 255.0
-    
-    # 初始化torchmetrics LPIPS模型
-    # torchmetrics使用不同的网络名称映射
-    net_mapping = {'alex': 'alex', 'vgg': 'vgg', 'squeeze': 'squeezenet'}
-    tm_net_type = net_mapping.get(net_type, 'alex')
-    
-    lpips_metric = LearnedPerceptualImagePatchSimilarity(net_type=tm_net_type)
-    
-    # 计算LPIPS
-    with torch.no_grad():
-        lpips_score = lpips_metric(target_tensor, pred_tensor)
-    
-    return lpips_score.item()
-
-def _cal_lpips_original(target, pred, net_type='alex'):
-    """使用原始lpips包的实现"""
-    # 确保输入是3通道图像
-    if target.ndim == 2:
-        # 灰度图像转换为3通道
-        target = np.stack([target] * 3, axis=-1)
-        pred = np.stack([pred] * 3, axis=-1)
-    elif target.ndim == 3 and target.shape[2] == 1:
-        # 单通道转换为3通道
-        target = np.repeat(target, 3, axis=2)
-        pred = np.repeat(pred, 3, axis=2)
-    
-    # 转换为PyTorch tensor并调整格式为NCHW
-    target_tensor = torch.from_numpy(target).permute(2, 0, 1).unsqueeze(0).float()
-    pred_tensor = torch.from_numpy(pred).permute(2, 0, 1).unsqueeze(0).float()
-    
-    # 归一化到[-1, 1]范围（原始LPIPS默认期望的范围）
-    if target.max() > 1.0:
+    # 归一化到[-1, 1]范围（LPIPS默认期望的范围）
+    if target.max() > (1.0 + 1e-6):
         target_tensor = target_tensor / 127.5 - 1.0
         pred_tensor = pred_tensor / 127.5 - 1.0
     else:
         target_tensor = target_tensor * 2.0 - 1.0
         pred_tensor = pred_tensor * 2.0 - 1.0
     
-    # 初始化LPIPS模型
-    loss_fn = lpips.LPIPS(net=net_type)
+    # 使用缓存的LPIPS模型, 避免每次计算都重新加载模型
+    if net_type not in _lpips_cache:
+        _lpips_cache[net_type] = lpips.LPIPS(net=net_type, verbose=False)
+    loss_fn = _lpips_cache[net_type]
     
     # 计算LPIPS
     with torch.no_grad():
@@ -222,16 +112,61 @@ def _cal_lpips_original(target, pred, net_type='alex'):
     return lpips_score.item()
 
 def cal_metrics(target, pred):
+    """计算所有图像质量指标, 形状可以是 (H,W), (C,H,W), (T,C,H,W), (B,T,C,H,W)"""
+    # 保存原始维度
+    original_shape = target.shape
+    original_ndim = target.ndim
+    
+    # 将输入重塑为 (N, C, H, W) 格式, 其中N是B * T
+    # (H, W)
+    if original_ndim == 2:
+        target_reshaped = target[np.newaxis, np.newaxis, ...]
+        pred_reshaped = pred[np.newaxis, np.newaxis, ...]
+    # (C, H, W) or (T, H, W)
+    elif original_ndim == 3:
+        # 假设是通道在前 (C, H, W)
+        if original_shape[0] <= 4:
+            target_reshaped = target[np.newaxis, ...]
+            pred_reshaped = pred[np.newaxis, ...]
+        # 假设是时间在前 (T, H, W)
+        else:
+            target_reshaped = target[..., np.newaxis].transpose(0, 3, 1, 2)
+            pred_reshaped = pred[..., np.newaxis].transpose(0, 3, 1, 2)
+    # (T, C, H, W)
+    elif original_ndim == 4:
+        target_reshaped = target.reshape(-1, original_shape[1], original_shape[2], original_shape[3])
+        pred_reshaped = pred.reshape(-1, original_shape[1], original_shape[2], original_shape[3])
+    # (B, T, C, H, W)
+    elif original_ndim == 5:
+        target_reshaped = target.reshape(-1, original_shape[2], original_shape[3], original_shape[4])
+        pred_reshaped = pred.reshape(-1, original_shape[2], original_shape[3], original_shape[4])
+    else:
+        raise ValueError(f"Unsupported target dimension: {original_ndim}")
+    
+    # 计算每个图像的指标
+    psnr_scores, ssim_scores, lpips_scores = [], [], []
+    
+    for i in range(target_reshaped.shape[0]):
+        target_img = target_reshaped[i]
+        pred_img = pred_reshaped[i]
+        
+        psnr_scores.append(cal_psnr(target_img, pred_img))
+        ssim_scores.append(cal_ssim(target_img, pred_img))
+        
+        if lpips is not None:
+            lpips_scores.append(cal_lpips(target_img, pred_img))
+    
+    # 计算平均指标
     metrics = {
         "mse": cal_mse(target, pred),
         "mae": cal_mae(target, pred),
         "rmse": cal_rmse(target, pred),
-        "psnr": cal_psnr(target, pred),
-        "ssim": cal_ssim(target, pred)
+        "psnr": np.mean(psnr_scores),
+        "ssim": np.mean(ssim_scores)
     }
     
-    # 添加LPIPS指标（如果可用）
-    if lpips_available or original_lpips_available:
-        metrics["lpips"] = cal_lpips(target, pred)
+    # 添加LPIPS指标(如果可用）
+    if lpips is not None and len(lpips_scores) > 0:
+        metrics["lpips"] = np.mean(lpips_scores)
     
     return metrics

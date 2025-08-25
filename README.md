@@ -23,12 +23,13 @@
 - STLight*
 
 ## 环境依赖
-python-3.13.5  
-(cuda-12.8, pytorch-2.8.0): pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128  
-numpy-2.1.2  
-matplotlib-3.10.0  
-scipy-1.16.1  
-scikit-image-0.25.2
-pyyaml-6.0.2  
-tqdm-4.67.1  
-lpips-0.1.4
+python-3.12.11 --conda  
+(cuda-12.6, pytorch-2.6.0): pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126  
+numpy-2.1.2 --conda  
+matplotlib-3.10.0 --conda  
+scipy-1.16.1 --conda  
+scikit-image-0.25.2 --conda  
+pyyaml-6.0.2 --conda  
+tqdm-4.67.1 --conda  
+lpips-0.1.4 --pip
+tabulate-0.9.0 --conda  

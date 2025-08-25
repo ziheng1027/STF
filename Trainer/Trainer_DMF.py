@@ -58,7 +58,7 @@ class Trainer_DMF(Trainer_Base):
             train_loss, val_loss = self.train_epoch(epoch)
             self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
             if self.early_stopping.check(val_loss):
-                self.logger.info(f"Early stopping at epoch {epoch}!")
+                self.logger.info(f"Early stopping at epoch {epoch}!\n")
                 break
             if val_loss < best_val_loss:
                 if best_checkpoint_path is not None and os.path.exists(best_checkpoint_path):
@@ -96,7 +96,7 @@ class Trainer_DMF(Trainer_Base):
         self.model.eval()
         losses = []
         sample_idx = 0
-        metrics = {"mse": [], "mae": [], "psnr": []}
+        metrics = {"mse": [], "mae": [], "rmse": [], "psnr": [], "ssim": [], "lpips": []}
         pbar = tqdm(self.test_loader, desc="Test", ncols=100)
 
         with torch.no_grad():
