@@ -35,4 +35,4 @@ class Logger:
         headers = list(metrics.keys())
         data = [list(metrics.values())]
         table = tabulate(data, headers=headers, tablefmt="grid")
-        self.logger.info("\n" + table)
+        self.logger.info("\n" + table + "\n")
