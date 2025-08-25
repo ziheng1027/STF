@@ -556,5 +556,6 @@ Temporary Items
 Data/*
 !Data/*.sh
 Output/*
+.claude
 CLAUDE.md
 CLAUDE.local.md
