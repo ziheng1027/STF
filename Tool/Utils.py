@@ -1,5 +1,6 @@
 import os
 import torch
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,6 +12,28 @@ def get_trainer(model_name, dataset_name, config, datasets_config):
         return module.Trainer(config, datasets_config, dataset_name)
     except ImportError:
         raise ValueError(f"未找到Trainer: {module_name}")
+
+def set_seed(seed=42):
+    """设置随机种子以确保结果可复现"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+def worker_init_fn(worker_id):
+    """DataLoader worker初始化函数, 确保每个worker有独立的随机种子"""
+    # 使用base_seed + worker_id来确保每个worker有不同但确定的随机性
+    base_seed = 42  # 这个值应该与main.py中设置的seed一致
+    worker_seed = base_seed + worker_id
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+    torch.manual_seed(worker_seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(worker_seed)
 
 def save_test_samples(idx, input, target, output, model_name, sample_dir, interval):
     """保存模型输出样本"""

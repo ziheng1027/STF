@@ -3,6 +3,7 @@ import torch
 import random
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+from Tool.Utils import worker_init_fn
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
@@ -73,7 +74,8 @@ def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num
         shuffle=True,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     val_loader = DataLoader(
         dataset=test_set,
@@ -81,7 +83,8 @@ def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     test_loader = DataLoader(
         dataset=test_set,
@@ -89,7 +92,8 @@ def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     return train_loader, val_loader, test_loader
 

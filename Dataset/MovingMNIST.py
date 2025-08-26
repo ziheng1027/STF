@@ -5,7 +5,10 @@ import random
 import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from Tool.Utils import worker_init_fn
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+
 
 class MovingMNISTDataset(Dataset):
     def __init__(self, mnist_path, test_dataset_path, is_train, input_frames=10, 
@@ -266,7 +269,8 @@ def get_dataloader(data_path, input_frames, output_frames, use_augment,
         shuffle=True,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     val_loader = DataLoader(
         dataset=test_set,
@@ -274,7 +278,8 @@ def get_dataloader(data_path, input_frames, output_frames, use_augment,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     test_loader = DataLoader(
         dataset=test_set,
@@ -282,7 +287,8 @@ def get_dataloader(data_path, input_frames, output_frames, use_augment,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     return train_loader, val_loader, test_loader
 
