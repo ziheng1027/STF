@@ -1,9 +1,9 @@
 import yaml
-from Tool.Utils import get_trainer, visualize_figure
+from Tool.Utils import get_trainer, visualize_figure, set_seed
 
 
 # 训练哪个模型?
-model_name = "UNet"
+model_name = "SmaAtUNet"
 # 使用哪个数据集？
 dataset_name = "TaxiBJ"
 # 选择哪个模式? "train", "test" or "visualize"
@@ -14,6 +14,10 @@ if __name__ == '__main__':
     datasets_config_path = "Config/Dataset.yml"
     config = yaml.safe_load(open(config_path, 'r', encoding='utf-8'))
     datasets_config = yaml.safe_load(open(datasets_config_path, 'r', encoding='utf-8'))
+
+    # 设置随机种子
+    seed = datasets_config.get("seed", 42)
+    set_seed(seed)
 
     trainer = get_trainer(model_name, dataset_name, config, datasets_config)
 

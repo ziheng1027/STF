@@ -15,6 +15,7 @@ max_lr: 0.1
 optimizer: Adam
 scheduler: OneCycleLR
 patience: 20
+seed: 42
 resume_from: 
 
 # 测试参数

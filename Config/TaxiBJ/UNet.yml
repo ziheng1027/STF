@@ -12,6 +12,7 @@ lr: 0.001
 optimizer: Adam
 scheduler: ReduceLROnPlateau
 patience: 20
+seed: 42
 resume_from: 
 
 # 测试参数
