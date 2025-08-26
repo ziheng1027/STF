@@ -86,3 +86,36 @@ def visualize_figure(model_name, dataset_name):
 def visualize_gif():
     """可视化为GIF"""
     pass
+
+
+def reshape_to_nchw(target, pred):
+    """将输入重塑为 (N, C, H, W) 格式, 其中N是B * T"""
+    # 原始维度
+    shape = target.shape
+    ndim = target.ndim
+    # (H, W), 添加N和C维度
+    if ndim == 2:
+        target_reshaped = target[np.newaxis, np.newaxis, ...]
+        pred_reshaped = pred[np.newaxis, np.newaxis, ...]
+    # (C, H, W) or (T, H, W)
+    elif ndim == 3:
+        # 假设是通道在前 (C, H, W), 添加N维度
+        if shape[0] < 4:
+            target_reshaped = target[np.newaxis, ...]
+            pred_reshaped = pred[np.newaxis, ...]
+        # 假设是时间在前 (T, H, W), 添加C维度
+        else:
+            target_reshaped = target[..., np.newaxis].transpose(0, 3, 1, 2)
+            pred_reshaped = pred[..., np.newaxis].transpose(0, 3, 1, 2)
+    # (T, C, H, W)
+    elif ndim == 4:
+        target_reshaped = target.reshape(-1, shape[1], shape[2], shape[3])
+        pred_reshaped = pred.reshape(-1, shape[1], shape[2], shape[3])
+    # (B, T, C, H, W)
+    elif ndim == 5:
+        target_reshaped = target.reshape(-1, shape[2], shape[3], shape[4])
+        pred_reshaped = pred.reshape(-1, shape[2], shape[3], shape[4])
+    else:
+        raise ValueError(f"不支持的输入维度: {ndim}")
+    
+    return target_reshaped, pred_reshaped
