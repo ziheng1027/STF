@@ -34,7 +34,7 @@ class Trainer_DMF(Trainer_Base):
         for idx, data_batch in enumerate(pbar):
             loss = self.train_batch(data_batch)
             losses.append(loss)
-            pbar.set_description_str(f"Epoch[{epoch}/{self.config['train']['epochs']}], Batch[{idx}/{num_batch}]")
+            pbar.set_description_str(f"Epoch[{epoch}/{self.config['epochs']}], Batch[{idx}/{num_batch}]")
             pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
         train_loss = np.mean(losses)
 
@@ -48,13 +48,13 @@ class Trainer_DMF(Trainer_Base):
         best_val_loss = float("inf")
         best_checkpoint_path = None
 
-        if self.config["train"]["resume_from"] is not None:
-            current_epoch = self.load_checkpoint(self.config["train"]["resume_from"])
+        if self.config["resume_from"] is not None:
+            current_epoch = self.load_checkpoint(self.config["resume_from"])
             start_epoch = current_epoch + 1
         else:
             start_epoch = 1
 
-        for epoch in range(start_epoch, self.config["train"]["epochs"] + 1):
+        for epoch in range(start_epoch, self.config["epochs"] + 1):
             train_loss, val_loss = self.train_epoch(epoch)
             self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
             if self.early_stopping.check(val_loss):
