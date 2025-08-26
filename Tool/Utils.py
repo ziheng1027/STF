@@ -50,6 +50,25 @@ def save_test_samples(idx, input, target, output, model_name, sample_dir, interv
 
     return idx
 
+def plot_loss(train_losses, val_losses, model_name, dataset_name):
+    """绘制训练和验证损失曲线"""
+    epochs = range(1, len(train_losses) + 1)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_losses, 'r-', label='Training Loss', linewidth=2)
+    plt.plot(epochs, val_losses, 'g-', label='Validation Loss', linewidth=2)
+    plt.title(f'{model_name} on {dataset_name} - Loss Curves', fontsize=14)
+    plt.xlabel('Epochs', fontsize=12)
+    plt.ylabel('Loss', fontsize=12)
+    plt.legend(fontsize=11)
+    plt.grid(True, alpha=0.3)
+    
+    # 保存图像
+    plt.savefig(f"Output/Visualization/{dataset_name}/{model_name}/loss_curve.pdf", dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"损失曲线已保存至: Output/Visualization/{dataset_name}/{model_name}/loss_curve.pdf")
+
 def visualize_base(idx, input, target, output):
     """可视化"""
     T, C, _, _ = input.shape
