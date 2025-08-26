@@ -9,15 +9,14 @@ model:
   groups: 8
 
 # 训练参数
-train:
-  epochs: 200
-  lr: 0.01
-  optimizer: Adam
-  scheduler: OneCycleLR
-  patience: 15
-  resume_from: 
+epochs: 200
+lr: 0.01
+max_lr: 0.1
+optimizer: Adam
+scheduler: OneCycleLR
+patience: 20
+resume_from: 
 
 # 测试参数
-test:
-  model_path: 
-  save_interval: 10
+model_path: 
+save_interval: 10

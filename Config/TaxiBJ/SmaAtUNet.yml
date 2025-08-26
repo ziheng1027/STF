@@ -9,15 +9,13 @@ model:
   reduction_ratio: 16
 
 # 训练参数
-train:
-  epochs: 200
-  lr: 0.001
-  optimizer: Adam
-  scheduler: ReduceLROnPlateau
-  patience: 15
-  resume_from: 
+epochs: 200
+lr: 0.001
+optimizer: Adam
+scheduler: ReduceLROnPlateau
+patience: 20
+resume_from: 
 
 # 测试参数
-test:
-  model_path: 
-  save_interval: 10
+model_path: Output\Checkpoint\TaxiBJ\SmaAtUNet_epoch44_loss0.0002.pt
+save_interval: 10
