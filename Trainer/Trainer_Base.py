@@ -12,16 +12,16 @@ class Trainer_Base:
     """训练器基类"""
     def __init__(self, config, datasets_config, dataset_name):
         self.config = config    # 训练配置
-        self.datasets_config = datasets_config  # 所有数据集的配置
+        self.datasets_config = datasets_config  # 每个数据集的配置
         self.dataset_name = dataset_name
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model, self.model_name = self.get_model()
         self.train_loader, self.val_loader, self.test_loader = self.get_dataloader(dataset_name)
-        self.optimizer = self.get_optimizer(config["train"]["optimizer"])
-        self.scheduler = self.get_scheduler(config["train"]["scheduler"])
+        self.optimizer = self.get_optimizer(config["optimizer"])
+        self.scheduler = self.get_scheduler(config["scheduler"])
         self.criterion = self.get_criterion()
-        self.early_stopping = EarlyStopping(config["train"]["patience"])
+        self.early_stopping = EarlyStopping(config["patience"])
         
         self.dirs = self.make_dirs()
         self.logger = Logger(self.model_name, self.dirs["log"])
@@ -45,11 +45,11 @@ class Trainer_Base:
     def get_optimizer(self, optimizer_name):
         """获取优化器"""
         if optimizer_name == "Adam":
-            optimizer = optim.Adam(self.model.parameters(), lr=self.config["train"].get("lr", 0.002))
+            optimizer = optim.Adam(self.model.parameters(), lr=self.config.get("lr", 0.002))
         elif optimizer_name == "AdamW":
-            optimizer = optim.AdamW(self.model.parameters(), lr=self.config["train"].get("lr", 0.002))
+            optimizer = optim.AdamW(self.model.parameters(), lr=self.config.get("lr", 0.002))
         elif optimizer_name == "SGD":
-            optimizer = optim.SGD(self.model.parameters(), lr=self.config["train"].get("lr", 0.002), momentum=0.9)
+            optimizer = optim.SGD(self.model.parameters(), lr=self.config.get("lr", 0.002), momentum=0.9)
         else:
             raise ValueError(f"不支持的Optimizer: {optimizer_name}")
         
@@ -58,16 +58,19 @@ class Trainer_Base:
     def get_scheduler(self, scheduler_name):
         """获取学习率调度器"""
         if scheduler_name == "StepLR":
-            scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config["train"].get("step_size", 10))
+            scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config.get("step_size", 20))
         elif scheduler_name == "ReduceLROnPlateau":
             scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=0.1, patience=5)
+        elif scheduler_name == "CosineAnnealingLR":
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.config.get("T_max", 100))
         elif scheduler_name == "OneCycleLR":
             scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
-                max_lr=self.config["train"].get("max_lr", 0.08),
-                epochs=self.config["train"].get("epochs", 100),
+                max_lr=self.config.get("max_lr", 0.08),
+                epochs=self.config.get("epochs", 100),
                 steps_per_epoch=len(self.train_loader)
             )
+        
         else:
             raise ValueError(f"不支持的Scheduler: {scheduler_name}")
         
@@ -78,14 +81,19 @@ class Trainer_Base:
         if isinstance(self.scheduler, torch.optim.lr_scheduler.StepLR):
             if not is_batch_update:
                 self.scheduler.step()
-        elif isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
-            if is_batch_update:
-                self.scheduler.step()
         elif isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             if not is_batch_update:
                 if val_loss is None:
                     raise ValueError("请提供val_loss以更新ReduceLROnPlateau")
                 self.scheduler.step(val_loss)
+        elif isinstance(self.scheduler, torch.optim.lr_scheduler.CosineAnnealingLR):
+            if not is_batch_update:
+                self.scheduler.step()
+        elif isinstance(self.scheduler, torch.optim.lr_scheduler.OneCycleLR):
+            if is_batch_update:
+                self.scheduler.step()
+        else:
+            raise ValueError(f"未实例化的Scheduler: {self.scheduler}")
 
     def get_criterion(self):
         """获取损失函数"""

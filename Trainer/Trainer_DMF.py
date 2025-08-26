@@ -92,7 +92,7 @@ class Trainer_DMF(Trainer_Base):
         return np.mean(losses)
 
     def test(self):
-        self.load_model_weight(self.config["test"]["model_path"])
+        self.load_model_weight(self.config["model_path"])
         self.model.eval()
         losses = []
         sample_idx = 0
