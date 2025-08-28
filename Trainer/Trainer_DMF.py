@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from Trainer.Trainer_Base import Trainer_Base
 from Tool.Metric import cal_metrics
-from Tool.Utils import save_test_samples
+from Tool.Utils import plot_loss, save_test_samples
 
 
 class Trainer_DMF(Trainer_Base):
@@ -56,7 +56,13 @@ class Trainer_DMF(Trainer_Base):
 
         for epoch in range(start_epoch, self.config["epochs"] + 1):
             train_loss, val_loss = self.train_epoch(epoch)
+            
+            # 记录损失历史
+            self.train_loss_history.append(train_loss)
+            self.val_loss_history.append(val_loss)
+            
             self.logger.info(f"Epoch[{epoch}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
+            
             if self.early_stopping.check(val_loss):
                 self.logger.info(f"Early stopping at epoch {epoch}!\n")
                 break
@@ -65,6 +71,10 @@ class Trainer_DMF(Trainer_Base):
                     os.remove(best_checkpoint_path)
                 best_val_loss = val_loss
                 best_checkpoint_path = self.save_checkpoint(epoch, val_loss)
+        
+        # 训练结束后绘制损失曲线
+        if self.train_loss_history and self.val_loss_history:
+            plot_loss(self.train_loss_history, self.val_loss_history, self.model_name, self.dataset_name)
     
     def evaluate_batch(self, data_batch, mode="val"):
         input, target = data_batch

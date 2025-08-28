@@ -25,6 +25,10 @@ class Trainer_Base:
         
         self.dirs = self.make_dirs()
         self.logger = Logger(self.model_name, self.dirs["log"])
+        
+        # 初始化损失历史记录
+        self.train_loss_history = []
+        self.val_loss_history = []
 
     def get_model(self):
         """获取模型"""
