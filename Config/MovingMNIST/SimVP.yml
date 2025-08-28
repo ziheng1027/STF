@@ -2,16 +2,16 @@
 model:
   input_shape: [10, 1, 128, 128]
   hid_channels_S: 64
-  hid_channels_T: 256
+  hid_channels_T: 512
   layers_S: 4
-  layers_T: 3
+  layers_T: 4
   inception_kernels: [3, 5, 7, 11]
   groups: 8
 
 # 训练参数
-epochs: 400
-lr: 0.01
-max_lr: 0.1
+epochs: 200
+lr: 0.001
+max_lr: 0.01
 optimizer: Adam
 scheduler: OneCycleLR
 patience: 20
