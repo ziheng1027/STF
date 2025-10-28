@@ -559,3 +559,4 @@ Output/*
 .claude
 CLAUDE.md
 CLAUDE.local.md
+Model/PiSim*.py

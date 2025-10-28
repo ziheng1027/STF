@@ -39,12 +39,12 @@ class Trainer_Base:
         dataset_config = self.datasets_config[dataset_name]
         if dataset_name == "MovingMNIST":
             from Dataset.MovingMNIST import get_dataloader
-            return get_dataloader(**dataset_config)
         elif dataset_name == "TaxiBJ":
             from Dataset.TaxiBJ import get_dataloader
-            return get_dataloader(**dataset_config)
+        
         else:
             raise ValueError(f"不支持的Dataset: {dataset_name}")
+        return get_dataloader(**dataset_config)
 
     def get_optimizer(self, optimizer_name):
         """获取优化器"""
