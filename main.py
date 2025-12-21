@@ -5,7 +5,7 @@ from Tool.Utils import get_trainer, visualize_figure, set_seed
 # 训练哪个模型?
 model_name = "SimVP"
 # 使用哪个数据集？
-dataset_name = "MovingMNIST"
+dataset_name = "SEVIR"
 # 选择哪个模式? "train", "test" or "visualize"
 mode = "train"
 

@@ -13,8 +13,16 @@ class Trainer_DMF(Trainer_Base):
 
     def train_batch(self, data_batch):
         input, target = data_batch
+        T_input, T_target = input.shape[1], target.shape[1]
         input, target = input.to(self.device), target.to(self.device)
-        output = self.model(input)
+        # 输入输出帧数相同的情况
+        if T_input == T_target:
+            output = self.model(input)
+        # 输入帧数大于输出帧数的情况, 只取前T_target帧预测
+        elif T_input > T_target:
+            output = self.model(input)
+            output = output[:, :T_target]
+
         loss = self.criterion(output, target)
         self.optimizer.zero_grad()
         loss.backward()
@@ -78,8 +86,17 @@ class Trainer_DMF(Trainer_Base):
     
     def evaluate_batch(self, data_batch, mode="val"):
         input, target = data_batch
+        T_input, T_target = input.shape[1], target.shape[1]
         input, target = input.to(self.device), target.to(self.device)
         output = self.model(input)
+        # 输入输出帧数相同的情况
+        if T_input == T_target:
+            output = self.model(input)
+        # 输入帧数大于输出帧数的情况, 只取前T_target帧预测
+        elif T_input > T_target:
+            output = self.model(input)
+            output = output[:, :T_target]
+            
         loss = self.criterion(output, target)
 
         if mode == "test":

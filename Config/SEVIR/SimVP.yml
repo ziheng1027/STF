@@ -1,0 +1,23 @@
+# 模型参数
+model:
+  input_shape: [7, 1, 128, 128]
+  hid_channels_S: 64
+  hid_channels_T: 256
+  layers_S: 4
+  layers_T: 3
+  inception_kernels: [3, 5, 7, 11]
+  groups: 8
+
+# 训练参数
+epochs: 200
+lr: 0.01
+max_lr: 0.1
+optimizer: Adam
+scheduler: OneCycleLR
+patience: 20
+seed: 42
+resume_from: 
+
+# 测试参数
+model_path: 
+save_interval: 10
