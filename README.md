@@ -31,5 +31,5 @@ scipy-1.16.1 --conda
 scikit-image-0.25.2 --conda  
 pyyaml-6.0.2 --conda  
 tqdm-4.67.1 --conda  
-lpips-0.1.4 --pip
+lpips-0.1.4 --pip  
 tabulate-0.9.0 --conda  
