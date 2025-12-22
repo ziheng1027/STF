@@ -9,6 +9,7 @@ dataset_name = "SEVIR"
 # 选择哪个模式? "train", "test" or "visualize"
 mode = "train"
 
+
 if __name__ == '__main__':
     # 获取配置文件
     config_path = f"Config/{dataset_name}/{model_name}.yml"

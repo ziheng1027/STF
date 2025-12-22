@@ -9,7 +9,7 @@ model:
   groups: 8
 
 # 训练参数
-epochs: 200
+epochs: 150
 lr: 0.01
 max_lr: 0.1
 optimizer: Adam
