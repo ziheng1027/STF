@@ -71,7 +71,7 @@ def plot_loss(train_losses, val_losses, model_name, dataset_name):
 
 def visualize_base(idx, input, target, output):
     """可视化"""
-    T, C, _, _ = input.shape
+    T, C, _, _ = target.shape
     plt.figure(figsize=(15, 9))
     # input
     for t in range(T):
