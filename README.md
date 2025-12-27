@@ -3,18 +3,20 @@
 时空预测: 初学者入门学习记录(简单框架)
 
 ## 数据集
-如果下载速度过慢,建议在google colab中下载
 ### MovingMNIST:
 - 下载：Data\download_moving_mnist.sh
 ### TaxiBJ:
 - 下载：Data\download_taxibj.sh
+### SEVIR:
+- 首先确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
+- 下载: Data\download_sevir_vil.sh
 
 ## 模型
 - ConvLSTM*
 - PredRNN*
-- UNet
-- SmaAt-UNet
 - PhyDNet
+- UNet
+- SmaAtUNet
 - MLPMixer*
 - ConvMixer*
 - ConvNeXt*
@@ -23,13 +25,5 @@
 - STLight*
 
 ## 环境依赖
-python-3.12.11 --conda  
-(cuda-12.6, pytorch-2.6.0): pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126  
-numpy-2.1.2 --conda  
-matplotlib-3.10.0 --conda  
-scipy-1.16.1 --conda  
-scikit-image-0.25.2 --conda  
-pyyaml-6.0.2 --conda  
-tqdm-4.67.1 --conda  
-lpips-0.1.4 --pip  
-tabulate-0.9.0 --conda  
+python>=3.12
+(cuda=12.6, pytorch=2.6.0): pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126 
