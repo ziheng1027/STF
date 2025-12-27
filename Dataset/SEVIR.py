@@ -1,53 +1,86 @@
 import os
 import h5py
 import torch
+import random
 import numpy as np
+import torchvision.transforms.functional as TF
+from torch import nn
 from torch.utils.data import Dataset, DataLoader, random_split
+from torchvision import transforms
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 
+class TransformsFixRotation(nn.Module):
+    r"""
+    Rotate by one of the given angles.
+    """
+    def __init__(self, angles):
+        super().__init__()
+        if not isinstance(angles, (list, tuple)):
+            angles = [angles, ]
+        self.angles = angles
+
+    def forward(self, x):
+        angle = random.choice(self.angles)
+        return TF.rotate(x, angle)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(angles={self.angles})"
+
+
 class SEVIRDataset(Dataset):
-    def __init__(self, data_path, type='vil'):
+    def __init__(self, data_path, type='vil', is_train=False):
         self.data_path = data_path
+        self.is_train = is_train
 
         with h5py.File(self.data_path, 'r') as f:
             self.vil = f[type][:]
 
         print(f"SEVIR dataset loaded. Shape: {self.vil.shape}")
 
+        if self.is_train:
+            self.augment = nn.Sequential(
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                TransformsFixRotation(angles=[0, 90, 180, 270])
+            )
+
+
     def __len__(self):
         return len(self.vil)
 
     def __getitem__(self, idx):
         full_seq = self.vil[idx]
-        inputs = full_seq[0:7]
-        target = full_seq[7:13]
-        
-        inputs_tensor = torch.from_numpy(inputs.astype(np.float32) / 255.0)
-        target_tensor = torch.from_numpy(target.astype(np.float32) / 255.0)
+        full_seq_tensor = torch.from_numpy(full_seq.astype(np.float32) / 255.0)
+        if self.is_train:
+            full_seq_tensor = self.augment(full_seq_tensor)
 
-        return inputs_tensor, target_tensor
+        inputs = full_seq_tensor[0:7]
+        target = full_seq_tensor[7:13]
+
+        return inputs, target
 
 def get_dataloader(train_data_path, test_data_path, batch_size_train, batch_size_valid, valid_ratio=0.1, num_workers=4):
-    train_dataset = SEVIRDataset(train_data_path)
-    test_dataset = SEVIRDataset(test_data_path)
+    train_dataset = SEVIRDataset(train_data_path, type='vil', is_train=True)
+    test_dataset = SEVIRDataset(test_data_path, type='vil', is_train=False)
 
-    total_train_size = len(train_dataset)
-    val_size = int(total_train_size * valid_ratio)
-    train_size = total_train_size - val_size
+    total_test_size = len(test_dataset)
+    valid_size = int(total_test_size * valid_ratio)
+    test_size = total_test_size - valid_size
 
-    print(f"Total training size: {total_train_size}, for train: {train_size}, for valid: {val_size}")
+    print(f"Total test size: {total_test_size}, for valid: {valid_size}, for test: {test_size}")
     
-    # 随机划分训练集和验证集
-    train_subset, valid_subset = random_split(
-        train_dataset,
-        [train_size, val_size],
+    # 随机划分验证集和测试集
+    valid_dataset, test_dataset = random_split(
+        test_dataset,
+        [valid_size, test_size],
         generator=torch.Generator().manual_seed(42)
     )
 
     train_loader = DataLoader(
-        train_subset,
+        train_dataset,
         batch_size=batch_size_train,
         shuffle=True,
         num_workers=num_workers,
@@ -55,7 +88,7 @@ def get_dataloader(train_data_path, test_data_path, batch_size_train, batch_size
         drop_last=True
     )
     valid_loader = DataLoader(
-        valid_subset,
+        valid_dataset,
         batch_size=batch_size_valid,
         shuffle=False,
         num_workers=num_workers,
@@ -78,11 +111,11 @@ if __name__ == '__main__':
     test_path = r"Data\SEVIR\SEVIR_VIL_STORMEVENTS_test.h5"
 
     train_loader, valid_loader, test_loader = get_dataloader(
-        train_path, test_path, batch_size=16, val_ratio=0.1, num_workers=0
+        train_path, test_path, batch_size_train=16, batch_size_valid=4, valid_ratio=0.1, num_workers=0
     )
 
     import matplotlib.pyplot as plt
-    for inputs, targets in train_loader:
+    for inputs, targets in test_loader:
         # inputs shape: (16, 7, 128, 128) targets shape: (16, 6, 128, 128)
         B= inputs.size(0)
         for b in range(B):

@@ -108,7 +108,7 @@ class Trainer_DMF(Trainer_Base):
     def validate(self):
         self.model.eval()
         losses = []
-        pbar = tqdm(self.val_loader, desc="Val", ncols=100)
+        pbar = tqdm(self.valid_loader, desc="Val", ncols=100)
 
         with torch.no_grad():
             for data_batch in pbar:

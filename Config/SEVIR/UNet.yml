@@ -16,5 +16,5 @@ seed: 42
 resume_from: 
 
 # 测试参数
-model_path: 
+model_path: Output\Checkpoint\SEVIR\UNet_epoch=79_loss=0.0046.pt
 save_interval: 10

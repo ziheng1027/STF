@@ -17,7 +17,7 @@ class Trainer_Base:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model, self.model_name = self.get_model()
-        self.train_loader, self.val_loader, self.test_loader = self.get_dataloader(dataset_name)
+        self.train_loader, self.valid_loader, self.test_loader = self.get_dataloader(dataset_name)
         self.optimizer = self.get_optimizer(config["optimizer"])
         self.scheduler = self.get_scheduler(config["scheduler"])
         self.criterion = self.get_criterion()
@@ -28,7 +28,7 @@ class Trainer_Base:
         
         # 初始化损失历史记录
         self.train_loss_history = []
-        self.val_loss_history = []
+        self.valid_loss_history = []
 
     def get_model(self):
         """获取模型"""

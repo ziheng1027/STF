@@ -56,20 +56,20 @@ class TaxiBJDataset(Dataset):
             targets = taxibj_seq[data_length:, ...]
         return inputs, targets
 
-def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num_workers=4):
+def get_dataloader(data_path, use_augment, batch_size_train, batch_size_valid, num_workers=4):
     """获取数据加载器"""
-    train_set = TaxiBJDataset(
+    train_dataset = TaxiBJDataset(
         data_path=data_path,
         is_train=True,
         use_augment=use_augment
     )
-    test_set = TaxiBJDataset(
+    test_dataset = TaxiBJDataset(
         data_path=data_path,
         is_train=False,
         use_augment=False
     )
     train_loader = DataLoader(
-        dataset=train_set,
+        dataset=train_dataset,
         batch_size=batch_size_train,
         shuffle=True,
         num_workers=num_workers,
@@ -77,9 +77,9 @@ def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num
         drop_last=True,
         worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
-    val_loader = DataLoader(
-        dataset=test_set,
-        batch_size=batch_size_val,
+    valid_loader = DataLoader(
+        dataset=test_dataset,
+        batch_size=batch_size_valid,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
@@ -87,19 +87,19 @@ def get_dataloader(data_path, use_augment, batch_size_train, batch_size_val, num
         worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     test_loader = DataLoader(
-        dataset=test_set,
-        batch_size=batch_size_val,
+        dataset=test_dataset,
+        batch_size=batch_size_valid,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
         drop_last=True,
         worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
-    return train_loader, val_loader, test_loader
+    return train_loader, valid_loader, test_loader
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader(
+    train_loader, valid_loader, test_loader = get_dataloader(
         data_path = r'Data\TaxiBJ\taxibj.npz',
         use_augment=True,
         batch_size_train=16,
