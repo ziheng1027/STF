@@ -8,8 +8,8 @@ from Tool.Utils import plot_loss, save_test_samples
 
 
 class Trainer_DMF(Trainer_Base):
-    def __init__(self, config, datasets_config, dataset_name):
-        super().__init__(config, datasets_config, dataset_name)
+    def __init__(self, model_config, dataset_config, metric_config, dataset_name):
+        super().__init__(model_config, dataset_config, metric_config, dataset_name)
 
     def train_batch(self, data_batch):
         input, target = data_batch
@@ -43,7 +43,7 @@ class Trainer_DMF(Trainer_Base):
         for idx, data_batch in enumerate(pbar):
             loss = self.train_batch(data_batch)
             losses.append(loss)
-            pbar.set_description_str(f"Epoch[{epoch}/{self.config['epochs']}], Batch[{idx}/{num_batch}]")
+            pbar.set_description_str(f"Epoch[{epoch}/{self.model_config['epochs']}], Batch[{idx}/{num_batch}]")
             pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
 
         train_loss = np.mean(losses)
@@ -71,7 +71,7 @@ class Trainer_DMF(Trainer_Base):
 
         # 测试时额外返回每个batch的指标以及输入, 目标和输出用于保存样本用于可视化
         if mode == "test":
-            metrics_batch = cal_metrics(target.cpu().numpy(), output.cpu().numpy())
+            metrics_batch = cal_metrics(target.cpu().numpy(), output.cpu().numpy(), self.metrics_name, self.threshold)
             return loss.item(), metrics_batch, input, target, output
 
         return loss.item()
@@ -81,14 +81,14 @@ class Trainer_DMF(Trainer_Base):
         best_checkpoint_path = None
 
         # 判断是否进行断点续训
-        if self.config["resume_from"] is not None:
-            current_epoch = self.load_checkpoint(self.config["resume_from"])
+        if self.model_config["resume_from"] is not None:
+            current_epoch = self.load_checkpoint(self.model_config["resume_from"])
             start_epoch = current_epoch + 1
         else:
             start_epoch = 1
 
         # 模型训练-主循环
-        for epoch in range(start_epoch, self.config["epochs"] + 1):
+        for epoch in range(start_epoch, self.model_config["epochs"] + 1):
             train_loss, valid_loss = self.train_epoch(epoch)
             
             # 记录每个epoch的损失
@@ -116,7 +116,7 @@ class Trainer_DMF(Trainer_Base):
     def validate(self):
         self.model.eval()
         losses = [] # 记录每个batch的验证集损失
-        pbar = tqdm(self.valid_loader, desc="Val", ncols=150)
+        pbar = tqdm(self.valid_loader, desc="Valid", ncols=150)
 
         with torch.no_grad():
             for data_batch in pbar:
@@ -127,11 +127,11 @@ class Trainer_DMF(Trainer_Base):
         return np.mean(losses)
 
     def test(self):
-        self.load_model_weight(self.config["model_path"])
+        self.load_model_weight(self.model_config["model_path"])
         self.model.eval()
         losses = [] # 记录每个batch的测试集损失
         sample_idx = 0
-        metrics = {"mse": [], "mae": [], "rmse": [], "psnr": [], "ssim": [], "lpips": []}
+        metrics = {name: [] for name in self.metrics_name}
         pbar = tqdm(self.test_loader, desc="Test", ncols=150)
 
         with torch.no_grad():
@@ -141,7 +141,8 @@ class Trainer_DMF(Trainer_Base):
                 pbar.set_postfix_str(f"loss: {loss:.4f}")
                 
                 for key in metrics:
-                    metrics[key].append(metrics_batch[key])
+                    if key in metrics_batch:
+                        metrics[key].append(metrics_batch[key])
                 
                 sample_idx = save_test_samples(sample_idx, input, target, output, self.model_name, self.dirs['sample'], interval=64)
             

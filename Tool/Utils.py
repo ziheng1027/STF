@@ -5,11 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_trainer(model_name, dataset_name, config, datasets_config):
+def get_trainer(model_name, dataset_name, model_config, dataset_config, metric_config):
     try:
         module_name = f"Trainer.Trainer_{model_name}"
         module = __import__(module_name, fromlist=["Trainer"])
-        return module.Trainer(config, datasets_config, dataset_name)
+        return module.Trainer(model_config, dataset_config, metric_config, dataset_name)
     except ImportError:
         raise ValueError(f"未找到Trainer: {module_name}")
 

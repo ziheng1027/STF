@@ -1,5 +1,5 @@
-mkdir -p SEVIR
-cd SEVIR
+mkdir -p ../../Data/SEVIR
+cd ../../Data/SEVIR
 
 # Download the SEVIR VIL dataset
 aws s3 cp --no-sign-request s3://sevir/CATALOG.csv CATALOG.csv

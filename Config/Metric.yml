@@ -1,0 +1,10 @@
+# 数据集的评估指标配置
+MovingMNIST: 
+  metrics: ["MSE", "MAE", "RMSE", "PSNR", "SSIM"]
+
+TaxiBJ: 
+  metrics: ["MSE", "MAE", "RMSE", "PSNR", "SSIM"]
+
+SEVIR: 
+  metrics: ["MSE", "MAE", "Precision", "Recall", "F1_Score", "Accuracy", "FAR", "CSI", "HSS"]
+  threshold: 0.2902 # 74 / 255

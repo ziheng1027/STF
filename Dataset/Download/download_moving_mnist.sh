@@ -1,5 +1,5 @@
-mkdir -p MovingMNIST
-cd MovingMNIST
+mkdir -p ../../Data/MovingMNIST
+cd ../../Data/MovingMNIST
 
 # Download the MovingMNIST dataset
 wget http://www.cs.toronto.edu/~nitish/unsupervised_video/mnist_test_seq.npy

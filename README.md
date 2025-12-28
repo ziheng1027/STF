@@ -17,9 +17,6 @@
 - PhyDNet
 - UNet
 - SmaAtUNet
-- MLPMixer*
-- ConvMixer*
-- ConvNeXt*
 - SimVP
 - Tau*
 - STLight*
