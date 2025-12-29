@@ -161,7 +161,7 @@ class Trainer_Base:
 
         random.setstate(checkpoint["random_python"])
         np.random.set_state(checkpoint["random_numpy"])
-        torch.set_rng_state(checkpoint["random_torch"].cpu().cpu())
+        torch.set_rng_state(checkpoint["random_torch"].cpu())
         if torch.cuda.is_available() and checkpoint["cuda"] is not None:
             torch.cuda.set_rng_state_all([state.cpu() for state in [state.cpu() for state in checkpoint["cuda"]]])
 
