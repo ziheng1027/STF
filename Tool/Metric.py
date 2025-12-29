@@ -12,6 +12,7 @@ except ImportError:
     warnings.warn("LPIPS package not installed. Install with 'pip install lpips' for LPIPS metric support.")
 
 
+
 def cal_mse(target, pred):
     """计算均方误差, 期望输入shape为 (C, H, W)"""
     # 计算平方误差并在所有维度上求平均
@@ -66,6 +67,7 @@ def cal_lpips(target, pred, net_type='alex'):
     if lpips is None:
         warnings.warn("LPIPS package 不可用. LPIPS指标为None.")
         return None
+    
     # 验证输入形状
     if target.ndim != 3:
         raise ValueError(f"LPIPS输入形状应为 (C, H, W), 但得到形状 {target.shape}")
@@ -111,35 +113,114 @@ def cal_lpips(target, pred, net_type='alex'):
     
     return lpips_score.item()
 
-def cal_metrics(target, pred):
+def cal_binary_mask(target, pred, threshold):
+    """计算二值掩码"""
+    target_mask = (target >= threshold).astype(int)
+    pred_mask = (pred >= threshold).astype(int)
+    return target_mask, pred_mask
+
+def cal_precision(target_mask, pred_mask):
+    """计算精确率"""
+    tp = np.sum(target_mask * pred_mask)
+    fp = np.sum((1 - target_mask) * pred_mask)
+    return tp / (tp + fp + 1e-6)
+
+def cal_recall(target_mask, pred_mask):
+    """计算召回率"""
+    tp = np.sum(target_mask * pred_mask)
+    fn = np.sum(target_mask * (1 - pred_mask))
+    return tp / (tp + fn + 1e-6)
+
+def cal_f1_score(target_mask, pred_mask):
+    """计算F1分数"""
+    precision = cal_precision(target_mask, pred_mask)
+    recall = cal_recall(target_mask, pred_mask)
+    return (2 * precision * recall) / (precision + recall + 1e-6)
+
+def cal_accuracy(target_mask, pred_mask):
+    """计算准确率"""
+    tp = np.sum(target_mask * pred_mask)
+    tn = np.sum((1 - target_mask) * (1 - pred_mask))
+    fp = np.sum((1 - target_mask) * pred_mask)
+    fn = np.sum(target_mask * (1 - pred_mask))
+    return (tp + tn) / (tp + tn + fp + fn + 1e-6)
+
+def cal_far(target_mask, pred_mask):
+    """计算空报率"""
+    fp = np.sum((1 - target_mask) * pred_mask)
+    tn = np.sum((1 - target_mask) * (1 - pred_mask))
+    return fp / (fp + tn + 1e-6)
+
+def cal_csi(target_mask, pred_mask):
+    """计算临界成功指数"""
+    tp = np.sum(target_mask * pred_mask)
+    fp = np.sum((1 - target_mask) * pred_mask)
+    fn = np.sum(target_mask * (1 - pred_mask))
+    return tp / (tp + fp + fn + 1e-6)
+
+def cal_hss(target_mask, pred_mask):
+    """计算Heidke skill score"""
+    tp = np.sum(target_mask * pred_mask)
+    tn = np.sum((1 - target_mask) * (1 - pred_mask))
+    fp = np.sum((1 - target_mask) * pred_mask)
+    fn = np.sum(target_mask * (1 - pred_mask))
+    num = (tp * tn) - (fp * fn)
+    den = ((tp + fn) * (fn + tn) + (tp + fp) * (fp + tn))
+    return 2 * num / (den + 1e-6)
+
+def cal_metrics(target, pred, metrics_name=None, threshold=None):
     """计算所有图像质量指标, 形状可以是 (H,W), (C,H,W), (T,C,H,W), (B,T,C,H,W)"""
+    # 如果没有指定需要计算哪些指标, 则计算默认指标
+    if metrics_name is None:
+        metrics_name = ["MSE", "MAE", "RMSE", "PSNR", "SSIM", "LPIPS"]
+    
     # 将输入转换为(N, C, H, W)的形式, N=B*T
     target_nchw, pred_nchw = reshape_to_nchw(target, pred)
     
-    # 计算每个图像的指标
+    # 计算每帧图像的指标
     psnr_scores, ssim_scores, lpips_scores = [], [], []
+    metrics = {}
     
     for i in range(target_nchw.shape[0]):
         target_img = target_nchw[i]
         pred_img = pred_nchw[i]
         
-        psnr_scores.append(cal_psnr(target_img, pred_img))
-        ssim_scores.append(cal_ssim(target_img, pred_img))
-        
-        if lpips is not None:
+        if "PSNR" in metrics_name:
+            psnr_scores.append(cal_psnr(target_img, pred_img))
+        if "SSIM" in metrics_name:
+            ssim_scores.append(cal_ssim(target_img, pred_img))
+        if "LPIPS" in metrics_name and lpips is not None:
             lpips_scores.append(cal_lpips(target_img, pred_img))
     
-    # 计算平均指标
-    metrics = {
-        "mse": cal_mse(target, pred),
-        "mae": cal_mae(target, pred),
-        "rmse": cal_rmse(target, pred),
-        "psnr": np.mean(psnr_scores),
-        "ssim": np.mean(ssim_scores)
-    }
+    if "MSE" in metrics_name:
+        metrics["MSE"] = cal_mse(target, pred)
+    if "MAE" in metrics_name:
+        metrics["MAE"] = cal_mae(target, pred)
+    if "RMSE" in metrics_name:
+        metrics["RMSE"] = cal_rmse(target, pred)
+    if "PSNR" in metrics_name:
+        metrics["PSNR"] = np.mean(psnr_scores)
+    if "SSIM" in metrics_name:
+        metrics["SSIM"] = np.mean(ssim_scores)
+    if "LPIPS" in metrics_name and lpips is not None and lpips_scores:
+        metrics["LPIPS"] = np.mean(lpips_scores)
     
-    # 添加LPIPS指标(如果可用）
-    if lpips is not None and len(lpips_scores) > 0:
-        metrics["lpips"] = np.mean(lpips_scores)
+    # 计算二值化指标(气象数据集)
+    if threshold is not None:
+        target_mask, pred_mask = cal_binary_mask(target, pred, threshold)
+        if "Precision" in metrics_name:
+            metrics["Precision"] = cal_precision(target_mask, pred_mask)
+        if "Recall" in metrics_name:
+            metrics["Recall"] = cal_recall(target_mask, pred_mask)
+        if "F1_Score" in metrics_name:
+            metrics["F1_Score"] = cal_f1_score(target_mask, pred_mask)
+        if "Accuracy" in metrics_name:
+            metrics["Accuracy"] = cal_accuracy(target_mask, pred_mask)
+        if "FAR" in metrics_name:
+            metrics["FAR"] = cal_far(target_mask, pred_mask)
+        if "CSI" in metrics_name:
+            metrics["CSI"] = cal_csi(target_mask, pred_mask)
+        if "HSS" in metrics_name:
+            metrics["HSS"] = cal_hss(target_mask, pred_mask)
     
     return metrics

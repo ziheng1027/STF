@@ -5,11 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_trainer(model_name, dataset_name, config, datasets_config):
+def get_trainer(model_name, dataset_name, model_config, dataset_config, metric_config):
     try:
         module_name = f"Trainer.Trainer_{model_name}"
         module = __import__(module_name, fromlist=["Trainer"])
-        return module.Trainer(config, datasets_config, dataset_name)
+        return module.Trainer(model_config, dataset_config, metric_config, dataset_name)
     except ImportError:
         raise ValueError(f"未找到Trainer: {module_name}")
 
@@ -45,7 +45,7 @@ def save_test_samples(idx, input, target, output, model_name, sample_dir, interv
                 "target": target[i].cpu().numpy(),
                 "output": output[i].cpu().numpy()
             }
-            np.save(f"{sample_dir}/{model_name}_sample_{idx}.npy", samples)
+            np.save(f"{sample_dir}/{model_name}-sample_{idx}.npy", samples)
         idx += 1
 
     return idx
@@ -71,7 +71,7 @@ def plot_loss(train_losses, val_losses, model_name, dataset_name):
 
 def visualize_base(idx, input, target, output):
     """可视化"""
-    T, C, _, _ = input.shape
+    T, C, _, _ = target.shape
     plt.figure(figsize=(15, 9))
     # input
     for t in range(T):
@@ -114,12 +114,12 @@ def visualize_figure(model_name, dataset_name):
     # 提取样本序号
     for file in os.listdir(dir):
         if file.endswith(".npy"):
-            idx = int(file.split("_")[2].split(".")[0])
+            idx = int(file.split("_")[1].split(".")[0])
             induices.add(idx)
     induices = sorted(list(induices))
 
     for idx in induices:
-        sample = np.load(f"{dir}/{model_name}_sample_{idx}.npy", allow_pickle=True).item()
+        sample = np.load(f"{dir}/{model_name}-sample_{idx}.npy", allow_pickle=True).item()
         input = sample["input"]
         target = sample["target"]
         output = sample["output"]
@@ -128,7 +128,6 @@ def visualize_figure(model_name, dataset_name):
 def visualize_gif():
     """可视化为GIF"""
     pass
-
 
 def reshape_to_nchw(target, pred):
     """将输入重塑为 (N, C, H, W) 格式, 其中N是B * T"""
