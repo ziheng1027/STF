@@ -110,15 +110,15 @@ def visualize_base(idx, input, target, output):
 def visualize_figure(model_name, dataset_name):
     """可视化为图像"""
     dir = f"Output/Sample/{dataset_name}/{model_name}"
-    induices = set()
+    indices = set()
     # 提取样本序号
     for file in os.listdir(dir):
         if file.endswith(".npy"):
             idx = int(file.split("_")[1].split(".")[0])
-            induices.add(idx)
-    induices = sorted(list(induices))
+            indices.add(idx)
+    indices = sorted(list(indices))
 
-    for idx in induices:
+    for idx in indices:
         sample = np.load(f"{dir}/{model_name}-sample_{idx}.npy", allow_pickle=True).item()
         input = sample["input"]
         target = sample["target"]
