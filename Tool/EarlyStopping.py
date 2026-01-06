@@ -1,3 +1,4 @@
+# Tool/EarlyStopping.py
 class EarlyStopping:
     def __init__(self, patience=10, delta=1e-5):
         self.patience = patience
