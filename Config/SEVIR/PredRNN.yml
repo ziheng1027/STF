@@ -11,7 +11,7 @@ model:
   stride: 1
   use_layer_norm: true
   reverse_scheduled_sampling: true
-  model_version: "V1"  # 可以切换 "V1" 或 "V2"
+  model_version: "V2"  # 可以切换 "V1" 或 "V2"
 
 # 训练参数
 epochs: 200

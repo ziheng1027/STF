@@ -18,7 +18,7 @@ TaxiBJ:
 SEVIR:
   train_data_path: Data\SEVIR\SEVIR_VIL_SR_train.h5
   test_data_path: Data\SEVIR\SEVIR_VIL_SR_test.h5
-  batch_size_train: 32
+  batch_size_train: 8
   batch_size_valid: 4
   valid_ratio: 0.5
   num_workers: 0

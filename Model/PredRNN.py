@@ -130,7 +130,6 @@ class PredRNN(nn.Module):
         decouple_loss = 0
         if self.model_version == "V2":
             decouple_loss = torch.mean(torch.stack(decouple_loss_list))
-            print("Decouple Loss List:", decouple_loss_list)
 
         return x_next_patched, decouple_loss
 
