@@ -140,7 +140,7 @@ class Trainer_Base:
             "random_torch": torch.get_rng_state(),
             "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
         }
-        checkpoint_path = f"{self.dirs["checkpoint"]}/{self.model_name}_epoch={epoch}_loss={val_loss:.4f}.pt"
+        checkpoint_path = f"{self.dirs['checkpoint']}/{self.model_name}_epoch={epoch}_loss={val_loss:.4f}.pt"
         torch.save(checkpoint, checkpoint_path)
 
         return checkpoint_path
@@ -175,7 +175,7 @@ class Trainer_Base:
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"未找到Checkpoint文件: {checkpoint_path}")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
         self.model.load_state_dict(checkpoint["model_state_dict"])
 
         self.logger.info(f"Model weights loaded successfully! path: {checkpoint_path}")

@@ -32,9 +32,9 @@ class PhyDNet(nn.Module):
             input: 输入图像张量
             first_timestep: 是否是该序列的第一个时间步
             decoding: 是否处于解码阶段
-            
+
         Returns:
-            (output, phy_output, hidden_phy, res_output): 
+            (output, phy_output, hidden_phy, res_output):
             - 最终输出图像
             - 物理分支重建结果
             - 物理分支隐藏状态
@@ -42,16 +42,20 @@ class PhyDNet(nn.Module):
         """
         # 通用编码器
         input = self.encoder(input)
-        if decoding:
-            input_phy = None
-        else:
-            # PhyCell分支编码器
-            input_phy = self.phy_encoder(input)
         # ConvLSTM分支编码器
         input_res = self.res_encoder(input)
 
-        # PhyCell分支
-        hidden_phy, output_phy = self.phycell(input_phy, first_timestep)
+        # PhyCell分支（仅在非decoding阶段更新）
+        if decoding:
+            # decoding阶段不更新PhyCell，只使用之前的状态
+            # 直接返回当前状态，不进行计算
+            hidden_phy = self.phycell.H
+            output_phy = self.phycell.H
+        else:
+            # PhyCell分支编码器
+            input_phy = self.phy_encoder(input)
+            hidden_phy, output_phy = self.phycell(input_phy, first_timestep)
+
         # ConvLSTM分支
         hidden_res, output_res = self.convlstm(input_res, first_timestep)
 

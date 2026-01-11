@@ -1,0 +1,31 @@
+# 模型参数
+model:
+  input_channels: 1
+  num_hidden_channels: [64, 64, 64, 64]
+  input_frames: 10
+  output_frames: 10
+  patch_size: 4
+  img_height: 64
+  img_width: 64
+  kernel_size: 5
+  stride: 1
+  use_layer_norm: true
+  reverse_scheduled_sampling: true
+  model_version: "V1"  # 可以切换 "V1" 或 "V2"
+
+# 训练参数
+epochs: 200
+lr: 0.001
+optimizer: Adam
+scheduler: StepLR
+start_iter: 10000
+end_iter: 50000
+aux_loss_weight: 0.1  # 辅助损失, 如PredRNN-V2 中的decouple loss, PhyDNet中的moment_loss等
+step_size: 30
+patience: 20
+seed: 42
+resume_from:
+
+# 测试参数
+model_path:
+save_interval: 10
