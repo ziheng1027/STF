@@ -1,5 +1,6 @@
 # Tool/Utils.py
 import os
+import math
 import torch
 import random
 import numpy as np
@@ -189,10 +190,44 @@ def unpatchify(img_patched, patch_size):
     return img
 
 """Scheduled Sampling策略"""
-def get_sampling_threshold(num_iters, start_iters=2000, end_iters=50000, reverse=False):
+def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=20000, end_iters=50000, reverse=False):
     """计算计划采样的概率阈值"""
+    B, T, C, H, W = input_patched.shape
     if end_iters <= start_iters: # prob < threshold => GT
         raise ValueError("end_iters必须大于start_iters")
-    delta = np.clip((num_iters - start_iters) / (end_iters - start_iters), 0.0, 1.0)
-    return (0.5 + 0.5 * delta) if reverse else (1.0 - delta)
+    
+    if reverse:
+        # input部分概率从0.5指数增长到1.0
+        if iters < start_iters:
+            input_threshold = 0.5
+        elif iters < end_iters:
+            input_threshold = 1.0 - 0.5 * math.exp(-float(iters - start_iters) / (end_iters - start_iters))
+        else:
+            input_threshold = 1.0
+        
+        # output部分概率从0.5线性衰减到0
+        if iters < start_iters:
+            output_threshold = 0.5
+        elif iters < end_iters:
+            output_threshold = 0.5 - (0.5 / (end_iters - start_iters)) * (iters - start_iters)
+        else:
+            output_threshold = 0.0
+    else:
+        # input部分概率始终为1.0
+        input_threshold = 1.0
+        # output部分概率从1.0线性衰减到0
+        if iters < end_iters:
+            output_threshold = max(0.0, 1.0 - (1.0 / end_iters) * iters)
+        else:
+            output_threshold = 0.0
+    
+    # 生成掩码
+    mask_patched = torch.zeros((B, T - 1, 1, 1, 1), device=input_patched.device)
+    random_prob = torch.rand((B, T - 1), device=input_patched.device)
 
+    # 划分input和output部分
+    split_idx = input_frames - 1
+    mask_patched[:, :split_idx] = (random_prob[:, :split_idx] < input_threshold).float().view(B, split_idx, 1, 1, 1)
+    mask_patched[:, split_idx:] = (random_prob[:, split_idx:] < output_threshold).float().view(B, T - 1 - split_idx, 1, 1, 1)
+    
+    return mask_patched

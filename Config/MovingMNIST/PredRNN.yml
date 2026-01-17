@@ -17,15 +17,14 @@ model:
 epochs: 200
 lr: 0.001
 optimizer: Adam
-scheduler: StepLR
-start_iter: 10000
+scheduler: ReduceLROnPlateau
+start_iter: 25000
 end_iter: 50000
 aux_loss_weight: 0.1  # 辅助损失, 如PredRNN-V2 中的decouple loss, PhyDNet中的moment_loss等
-step_size: 30
 patience: 20
 seed: 42
 resume_from:
 
 # 测试参数
-model_path:
+model_path: Output\Checkpoint\MovingMNIST\PredRNN_epoch=18_loss=0.0200.pt
 save_interval: 10

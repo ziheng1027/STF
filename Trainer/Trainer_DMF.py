@@ -32,20 +32,20 @@ class Trainer_DMF(Trainer_Base):
         self.optimizer.step()
         # OneCycleLR需要在每个batch后更新学习率
         self.update_scheduler(is_batch_update=True)
+        self.steps += 1
         
         return loss.item()
     
     def train_epoch(self, epoch):
         self.model.train()
-        num_batch = len(self.train_loader)
         losses = [] # 记录每个batch的训练集损失
         pbar = tqdm(self.train_loader, ncols=150)
 
         for idx, data_batch in enumerate(pbar):
             loss = self.train_batch(data_batch)
             losses.append(loss)
-            pbar.set_description_str(f"Epoch[{epoch}/{self.model_config['epochs']}], Batch[{idx}/{num_batch}]")
-            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
+            pbar.set_description_str(f"Epoch[{epoch}/{self.model_config['epochs']}], Batch_size[{len(data_batch[0])}]")
+            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}, steps: {self.steps}")
 
         train_loss = np.mean(losses)
         valid_loss = self.validate()
@@ -54,7 +54,7 @@ class Trainer_DMF(Trainer_Base):
 
         return train_loss, valid_loss
     
-    def evaluate_batch(self, data_batch, mode="val"):
+    def evaluate_batch(self, data_batch, mode="valid"):
         input, target = data_batch
         input, target = input.to(self.device), target.to(self.device)
 
@@ -121,7 +121,7 @@ class Trainer_DMF(Trainer_Base):
 
         with torch.no_grad():
             for data_batch in pbar:
-                loss = self.evaluate_batch(data_batch, mode="val")
+                loss = self.evaluate_batch(data_batch, mode="valid")
                 losses.append(loss)
                 pbar.set_postfix_str(f"loss: {loss:.4f}")
 

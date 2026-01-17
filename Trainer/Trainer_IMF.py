@@ -5,14 +5,12 @@ import numpy as np
 from tqdm import tqdm
 from Trainer.Trainer_Base import Trainer_Base
 from Tool.Metric import cal_metrics
-from Tool.Utils import plot_loss, save_test_samples, patchify, unpatchify, get_sampling_threshold
+from Tool.Utils import plot_loss, save_test_samples, patchify, unpatchify, get_scheduled_sampling_mask
 
 
 class Trainer_IMF(Trainer_Base):
     def __init__(self, model_config, dataset_config, metric_config, dataset_name):
         super().__init__(model_config, dataset_config, metric_config, dataset_name)
-
-        self.steps = 0  # 用于记录训练步数, 以便调整采样率
 
     def train_batch(self, data_batch):
         input, target = data_batch
@@ -22,26 +20,18 @@ class Trainer_IMF(Trainer_Base):
 
         # scheduled sampling 掩码生成
         B, T, C, H, W = input_patched.shape
-        sampling_threshold = get_sampling_threshold(
-            self.steps, 
-            self.model_config["start_iter"],
-            self.model_config["end_iter"],
-            self.model_config["model"].get("reverse_scheduled_sampling", True)
+        mask_patched = get_scheduled_sampling_mask(
+            iters=self.steps, 
+            input_patched=input_patched,
+            input_frames=self.model_config["model"]["input_frames"],
+            start_iters=self.model_config["start_iter"],
+            end_iters=self.model_config["end_iter"],
+            reverse=self.model_config["model"]["reverse_scheduled_sampling"]
         )
-        mask_patched = torch.zeros((B, T - 1, C, H, W)).to(self.device)
-        random_flip = torch.rand((B, T - 1)).to(self.device)
-        ones = torch.ones_like(random_flip).to(self.device)
-        zeros = torch.zeros_like(random_flip).to(self.device)
-        mask_flag = torch.where(random_flip < sampling_threshold, ones, zeros)
-        mask_patched = mask_flag.view(B, T - 1, 1, 1, 1).expand_as(mask_patched)
 
-        # 正常scheduled sampling(前input_frames-1帧)强制使用真值
-        if not self.model_config["model"]["reverse_scheduled_sampling"]:
-            mask_patched[:, :self.model_config["model"]["input_frames"] - 1] = 1.0
-        
         output_patched, aux_loss = self.model(input_patched, mask_patched)
         loss = self.criterion(output_patched, input_patched[:, 1:])  # 预测输出(2->20, 19帧)
-        total_loss = loss + self.model_config["aux_loss_weight"] * aux_loss
+        total_loss = loss + self.model_config.get("aux_loss_weight", 0) * aux_loss
         self.optimizer.zero_grad()
         total_loss.backward()
         self.optimizer.step()
@@ -51,18 +41,16 @@ class Trainer_IMF(Trainer_Base):
 
         return total_loss.item()
 
-
     def train_epoch(self, epoch):
         self.model.train()
-        num_batch = len(self.train_loader)
         losses = [] # 记录每个batch的训练集损失
         pbar = tqdm(self.train_loader, ncols=150)
 
         for idx, data_batch in enumerate(pbar):
             loss = self.train_batch(data_batch)
             losses.append(loss)
-            pbar.set_description_str(f"Epoch[{epoch}/{self.model_config['epochs']}], Batch[{idx}/{num_batch}]")
-            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}")
+            pbar.set_description_str(f"Epoch[{epoch}/{self.model_config['epochs']}], Batch_size[{len(data_batch[0])}]")
+            pbar.set_postfix_str(f"loss: {loss:.4f}, lr: {self.optimizer.param_groups[0]['lr']:.4f}, steps: {self.steps}")
         train_loss = np.mean(losses)
         valid_loss = self.validate()
         # StepLR, ReduceLROnPlateau需要在每个epoch后更新学习率
@@ -70,7 +58,7 @@ class Trainer_IMF(Trainer_Base):
 
         return train_loss, valid_loss
 
-    def evaluate_batch(self, data_batch, mode="val"):
+    def evaluate_batch(self, data_batch, mode="valid"):
         input, target = data_batch
         input, target = input.to(self.device), target.to(self.device)
         combine = torch.cat([input, target], dim=1)  # [B, T_input + T_target, C, H, W]
@@ -142,7 +130,7 @@ class Trainer_IMF(Trainer_Base):
 
         with torch.no_grad():
             for data_batch in pbar:
-                loss = self.evaluate_batch(data_batch, mode="val")
+                loss = self.evaluate_batch(data_batch, mode="valid")
                 losses.append(loss)
                 pbar.set_postfix_str(f"loss: {loss:.4f}")
             

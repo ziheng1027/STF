@@ -95,8 +95,7 @@ class PredRNN(nn.Module):
                     x_t = x_patched[:, t]
                 else:
                     if mask_patched is not None:
-                        # 此处mask取t - input_frames和t - 1并没有区别, 因为mask是随机生成的全1或全0矢量, 但取t - input_frames可以兼容只传入input_frames帧mask的情况
-                        mask_t = mask_patched[:, t - self.input_frames]
+                        mask_t = mask_patched[:, t - 1]
                         x_t = mask_t * x_patched[:, t] + (1 - mask_t) * x_out
                     else:
                         x_t = x_out
@@ -109,7 +108,7 @@ class PredRNN(nn.Module):
             
             if self.model_version == "V2":
                 delta_c_norm = F.normalize(self.adapter(delta_c).view(delta_c.shape[0], delta_c.shape[1], -1), dim=2)
-                delta_m_norm = F.normalize(self.adapter(delta_m).view(delta_c.shape[0], delta_c.shape[1], -1), dim=2)
+                delta_m_norm = F.normalize(self.adapter(delta_m).view(delta_m.shape[0], delta_m.shape[1], -1), dim=2)
                 decouple_loss_list.append(torch.mean(torch.abs(torch.cosine_similarity(delta_c_norm, delta_m_norm, dim=2))))
             
             # layer 1~N

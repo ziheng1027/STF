@@ -27,6 +27,7 @@ class Trainer_Base:
         
         self.dirs = self.make_dirs()
         self.logger = Logger(self.model_name, self.dirs["log"])
+        self.steps = 0  # 用于记录训练步数
         
         # 初始化损失历史记录
         self.train_loss_history = []
@@ -192,7 +193,7 @@ class Trainer_Base:
         """训练模型"""
         pass
 
-    def evaluate_batch(self, data_batch, mode="val"):
+    def evaluate_batch(self, data_batch, mode="valid"):
         """评估一个batch"""
         pass
 

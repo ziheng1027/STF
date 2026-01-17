@@ -9,9 +9,4 @@ class Trainer(Trainer_IMF):
     def get_model(self):
         from Model.PredRNN import PredRNN
         model = PredRNN(**self.model_config['model'])
-        model_version = self.model_config["model"].get("model_version", "") 
-        if model_version == "V2":
-            return model.to(self.device), f"{model.__class__.__name__}_{model_version}"
-        else:
-            model_version = "V1"
-            return model.to(self.device), f"{model.__class__.__name__}_{model_version}"
+        return model.to(self.device), model.__class__.__name__
