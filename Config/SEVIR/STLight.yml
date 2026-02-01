@@ -1,7 +1,7 @@
 # 模型参数
 model:
-  in_channels: 10
-  out_channels: 10
+  in_channels: 7
+  out_channels: 6
   hid_channels: 1024
   layers: 16
   patch_size: 4
