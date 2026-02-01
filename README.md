@@ -13,13 +13,13 @@
 
 ## 模型
 - ConvLSTM*
-- PredRNN*
+- PredRNN
 - PhyDNet
 - UNet
 - SmaAtUNet
 - SimVP
 - Tau*
-- STLight*
+- STLight
 
 ## 环境依赖
 python>=3.12, cuda>=12.x, pytorch>=2.6.0  

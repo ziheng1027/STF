@@ -1,0 +1,24 @@
+# 模型参数
+model:
+  in_channels: 10
+  out_channels: 10
+  hid_channels: 1024
+  layers: 16
+  patch_size: 0
+  overlapping: 0
+  k1: 3
+  k2: 7
+
+# 训练参数
+epochs: 200
+lr: 0.003
+max_lr: 0.01
+optimizer: Adam
+scheduler: OneCycleLR
+patience: 20
+seed: 42
+resume_from: 
+
+# 测试参数
+model_path: 
+save_interval: 16
