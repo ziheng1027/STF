@@ -10,6 +10,7 @@
 ### SEVIR:
 - 运行download_sevir_vil.sh脚本之前, 请确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
 - 下载(bash): sh "Dataset\Download\download_sevir_vil.sh"
+- SEVIR数据处理可移步: https://github.com/ziheng1027/SEVIR/tree/main
 
 ## 模型
 - ConvLSTM*(NIPS 2015)
@@ -20,6 +21,11 @@
 - SimVP(CVPR 2022)
 - Tau*(CVPR 2023)
 - STLight(WACV 2024)
+
+## 训练器
+- Trainer_Base: 训练器基类
+- Trainer_DMF: 直接多步预测训练器, 适合seq2seq结构的模型
+- Trainer_IMF: 迭代多步预测训练器, 适合自回归结构的模型
 
 ## 环境依赖
 python>=3.12, cuda>=12.x, pytorch>=2.6.0  
