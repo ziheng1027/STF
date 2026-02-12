@@ -18,8 +18,7 @@
 - PhyDNet(CVPR 2020)
 - UNet(CVPR 2015)
 - SmaAtUNet(PRL 2021)
-- SimVP(CVPR 2022)
-- Tau*(CVPR 2023)
+- SimVP(IncepU:CVPR 2022, gSTA:IEEE 2022, TAU:CVPR 2023)
 - STLight(WACV 2024)
 
 ## 训练器
