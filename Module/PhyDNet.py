@@ -6,7 +6,7 @@ from scipy.special import factorial
 from functools import reduce
 
 
-class PhyCell_Unit(nn.Module):
+class PhyCellBlock(nn.Module):
     def __init__(self, input_dim, hidden_dim, kernel_size, bias=1):
         super().__init__()
         self.input_dim = input_dim
@@ -71,7 +71,7 @@ class PhyCell(nn.Module):
         cell_list = []
         for i in range(self.n_layers):
             cell_list.append(
-                PhyCell_Unit(
+                PhyCellBlock(
                     input_dim=input_dim,
                     hidden_dim=self.hidden_dim[i],
                     kernel_size=self.kernel_size
@@ -106,7 +106,7 @@ class PhyCell(nn.Module):
         self.H = H
 
 
-class ConvLSTM_Unit(nn.Module):
+class ConvLSTMBlock(nn.Module):
     def __init__(self, input_shape, input_dim, hidden_dim, kernel_size, bias=1):
         super().__init__()
         self.height, self.width = input_shape
@@ -156,7 +156,7 @@ class ConvLSTM(nn.Module):
         for i in range(self.n_layers):
             cur_input_dim = self.input_dim if i == 0 else self.hidden_dim[i-1]
             cell_list.append(
-                ConvLSTM_Unit(
+                ConvLSTMBlock(
                     input_shape=self.input_shape,
                     input_dim=cur_input_dim,
                     hidden_dim=self.hidden_dim[i],
