@@ -1,4 +1,5 @@
 # Tool/Logger.py
+import json
 import logging
 from tabulate import tabulate
 
@@ -29,6 +30,12 @@ class Logger:
     def info(self, message):
         """记录信息级别日志"""
         self.logger.info(message)
+    
+    def log_config(self, config_dict):
+        """记录模型配置"""
+        # 使用 json.dumps 格式化字典，indent=4 使其易读，ensure_ascii=False 支持中文
+        config_str = json.dumps(config_dict, indent=4, ensure_ascii=False)
+        self.logger.info(f"Model Configuration:\n{config_str}")
 
     def log_metrics(self, metrics):
         """以表格形式记录评估指标"""
