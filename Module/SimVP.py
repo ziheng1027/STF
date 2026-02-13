@@ -144,7 +144,7 @@ class InceptionBlock(nn.Module):
 
 class ChannelMixer(nn.Module):
     """在gSTA块和TAU块中混合通道信息"""
-    def __init__(self, in_channels, out_channels=None, drop_ratio=0, mlp_ratio=4):
+    def __init__(self, in_channels, out_channels, mlp_ratio=4, drop_ratio=0):
         super().__init__()
 
         hid_channels = int(in_channels * mlp_ratio)
@@ -156,13 +156,14 @@ class ChannelMixer(nn.Module):
             hid_channels, 
             hid_channels, 
             kernel_size=3,
-            stride=1, 
-            padding=1, 
+            stride=1,
+            padding=1,
+            bias=True,
             groups=hid_channels
         )
         self.act_func = nn.GELU()
         # 1x1卷积降维, 映射回目标维度
-        self.fc2 = nn.Conv2d(hid_channels, out_channels, kernel_size=1)
+        self.fc2 = nn.Conv2d(hid_channels, in_channels, kernel_size=1)
         # dropout防止过拟合
         self.drop = nn.Dropout(drop_ratio)
         # 截断正态分布初始化
@@ -239,7 +240,7 @@ class TABlock(nn.Module):
         self.drop_path = DropPath(drop_path_prob) if drop_path_prob > 0.0 else nn.Identity()
 
         self.norm2 = nn.BatchNorm2d(in_channels)
-        self.mixer = ChannelMixer(in_channels, mlp_ratio, drop_ratio)
+        self.mixer = ChannelMixer(in_channels, out_channels, mlp_ratio, drop_ratio)
 
         self.layerscale1 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
         self.layerscale2 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
@@ -262,10 +263,14 @@ class TABlock(nn.Module):
 
 
 class InceptionTranslator(nn.Module):
-    """SimVP-V1版(IncepU)的时序转换器"""
-    def __init__(self, in_channels, hid_channels, translator_layers, kernel_sizes=[3, 5, 7, 11], groups=8):
+    """SimVP-V1版(IncepU)的Translator"""
+    def __init__(self, in_channels, hid_channels, translator_layers, **kwargs):
         super().__init__()
+
         self.translator_layers = translator_layers
+        inception_kernels = kwargs.get('inception_kernels', [3, 5, 7, 11])
+        groups = kwargs.get('groups', 8)
+
         # 创建编码器层
         encoder_layers = []
         # 第一层
@@ -274,8 +279,8 @@ class InceptionTranslator(nn.Module):
                 in_channels=in_channels,
                 hid_channels=hid_channels // 2,
                 out_channels=hid_channels,
-                inception_kernels=kernel_sizes,
-                groups=groups
+                inception_kernels=inception_kernels,
+                groups=groups,
             )
         )
         # 中间层
@@ -285,7 +290,7 @@ class InceptionTranslator(nn.Module):
                     in_channels=hid_channels,
                     hid_channels=hid_channels // 2,
                     out_channels=hid_channels,
-                    inception_kernels=kernel_sizes,
+                    inception_kernels=inception_kernels,
                     groups=groups
                 )
             )
@@ -296,8 +301,8 @@ class InceptionTranslator(nn.Module):
                 hid_channels=hid_channels // 2,
                 # out_channels=in_channels, # 1
                 out_channels=hid_channels,  # 2 - 原文相同设置
-                inception_kernels=kernel_sizes,
-                groups=groups,
+                inception_kernels=inception_kernels,
+                groups=groups
             )
         )
         # 创建解码器层
@@ -309,7 +314,7 @@ class InceptionTranslator(nn.Module):
                 in_channels=hid_channels,  # 2 - 原文相同设置
                 hid_channels=hid_channels // 2,
                 out_channels=hid_channels,
-                inception_kernels=kernel_sizes,
+                inception_kernels=inception_kernels,
                 groups=groups
             )
         )
@@ -320,7 +325,7 @@ class InceptionTranslator(nn.Module):
                     in_channels=hid_channels * 2,
                     hid_channels=hid_channels // 2,
                     out_channels=hid_channels,
-                    inception_kernels=kernel_sizes,
+                    inception_kernels=inception_kernels,
                     groups=groups
                 )
             )
@@ -330,8 +335,8 @@ class InceptionTranslator(nn.Module):
                 in_channels=hid_channels * 2,
                 hid_channels=hid_channels // 2,
                 out_channels=in_channels,
-                inception_kernels=kernel_sizes,
-                groups=groups,
+                inception_kernels=inception_kernels,
+                groups=groups
             )
         )
         # 创建编码器和解码器
@@ -360,11 +365,15 @@ class InceptionTranslator(nn.Module):
 
 
 class GATranslator(nn.Module):
-    """SimVP-V2版(gSTA)的时序转换器"""
-    def __init__(self, in_channels, hid_channels, translator_layers, drop_path_prob=0.1, **kwargs):
+    """SimVP-V2版(gSTA)的Translator"""
+    def __init__(self, in_channels, hid_channels, translator_layers, **kwargs):
         super().__init__()
 
         self.translator_layers = translator_layers
+        kernel_size = kwargs.get('kernel_size', 21)
+        mlp_ratio = kwargs.get('mlp_ratio', 4)
+        drop_ratio = kwargs.get('drop_ratio', 0)
+        drop_path_prob = kwargs.get('drop_path_prob', 0.1)
         drop_path_ratio = [x.item() for x in torch.linspace(1e-2, drop_path_prob, translator_layers)]
 
         blocks = []
@@ -373,8 +382,10 @@ class GATranslator(nn.Module):
             GABlock(
                 in_channels=in_channels,
                 out_channels=hid_channels,
+                kernel_size=kernel_size,
+                mlp_ratio=mlp_ratio,
+                drop_ratio=drop_ratio,
                 drop_path_prob=drop_path_ratio[0],
-                **kwargs
             )
         )
         # 中间层
@@ -383,8 +394,10 @@ class GATranslator(nn.Module):
                 GABlock(
                     in_channels=hid_channels,
                     out_channels=hid_channels,
+                    kernel_size=kernel_size,
+                    mlp_ratio=mlp_ratio,
+                    drop_ratio=drop_ratio,
                     drop_path_prob=drop_path_ratio[i],
-                    **kwargs
                 )
             )
         # 最后一层
@@ -392,8 +405,10 @@ class GATranslator(nn.Module):
             GABlock(
                 in_channels=hid_channels,
                 out_channels=in_channels,
+                kernel_size=kernel_size,
+                mlp_ratio=mlp_ratio,
+                drop_ratio=drop_ratio,
                 drop_path_prob=drop_path_ratio[-1],
-                **kwargs
             )
         )
         self.blocks = nn.ModuleList(blocks)
@@ -410,11 +425,15 @@ class GATranslator(nn.Module):
 
 
 class TATranslator(nn.Module):
-    """SimVP-V3版(TAU)的时序转换器"""
-    def __init__(self, in_channels, hid_channels, translator_layers, drop_path_prob=0.1, **kwargs):
+    """SimVP-V3版(TAU)的Translator"""
+    def __init__(self, in_channels, hid_channels, translator_layers, **kwargs):
         super().__init__()
 
         self.translator_layers = translator_layers
+        kernel_size = kwargs.get('kernel_size', 21)
+        mlp_ratio = kwargs.get('mlp_ratio', 4)
+        drop_ratio = kwargs.get('drop_ratio', 0)
+        drop_path_prob = kwargs.get('drop_path_prob', 0.1)
         drop_path_ratio = [x.item() for x in torch.linspace(1e-2, drop_path_prob, translator_layers)]
 
         blocks = []
@@ -423,8 +442,10 @@ class TATranslator(nn.Module):
             TABlock(
                 in_channels=in_channels,
                 out_channels=hid_channels,
+                kernel_size=kernel_size,
+                mlp_ratio=mlp_ratio,
+                drop_ratio=drop_ratio,
                 drop_path_prob=drop_path_ratio[0],
-                **kwargs
             )
         )
         # 中间层
@@ -433,8 +454,10 @@ class TATranslator(nn.Module):
                 TABlock(
                     in_channels=hid_channels,
                     out_channels=hid_channels,
+                    kernel_size=kernel_size,
+                    mlp_ratio=mlp_ratio,
+                    drop_ratio=drop_ratio,
                     drop_path_prob=drop_path_ratio[i],
-                    **kwargs
                 )
             )
         # 最后一层
@@ -442,8 +465,10 @@ class TATranslator(nn.Module):
             TABlock(
                 in_channels=hid_channels,
                 out_channels=in_channels,
+                kernel_size=kernel_size,
+                mlp_ratio=mlp_ratio,
+                drop_ratio=drop_ratio,
                 drop_path_prob=drop_path_ratio[-1],
-                **kwargs
             )
         )
         self.blocks = nn.ModuleList(blocks)
@@ -513,12 +538,11 @@ class Translator(nn.Module):
     def __init__(self, translator_type, in_channels, hid_channels, translator_layers, **kwargs):
         super().__init__()
 
-        translator_type = translator_type.lower()
-        if translator_type == 'incepu':
+        if translator_type.lower() == 'incepu':
             self.translator = InceptionTranslator(in_channels, hid_channels, translator_layers, **kwargs)
-        elif translator_type == 'gsta':
+        elif translator_type.lower() == 'gsta':
             self.translator = GATranslator(in_channels, hid_channels, translator_layers, **kwargs)
-        elif translator_type == 'tau':
+        elif translator_type.lower() == 'tau':
             self.translator = TATranslator(in_channels, hid_channels, translator_layers, **kwargs)
         else:
             raise ValueError(f"不支持的Translator类型: {translator_type}")
