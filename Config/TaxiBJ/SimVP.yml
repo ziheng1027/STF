@@ -18,8 +18,7 @@ model:
 
 # 训练参数
 epochs: 200
-lr: 0.01
-max_lr: 0.1
+lr: 5e-4
 optimizer: Adam
 scheduler: CosineAnnealingLR
 patience: 20

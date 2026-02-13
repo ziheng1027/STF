@@ -19,7 +19,6 @@ model:
 # 训练参数
 epochs: 200
 lr: 0.001
-max_lr: 0.01
 optimizer: Adam
 scheduler: OneCycleLR
 patience: 20
