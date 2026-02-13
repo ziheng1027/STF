@@ -3,10 +3,10 @@ model:
   input_shape: [4, 2, 32, 32]
   # 可选的translator_type有"IncepU"、"gSTA"和"TAU"，分别对应SimVP的V1、V2和V3版本
   translator_type: IncepU
-  hid_channels_S: 64
+  hid_channels_S: 32
   hid_channels_T: 256
-  layers_S: 4
-  layers_T: 3
+  layers_S: 2
+  layers_T: 8
   # IncepU所需参数
   inception_kernels: [3, 5, 7, 11]
   groups: 8
@@ -21,7 +21,7 @@ epochs: 200
 lr: 0.01
 max_lr: 0.1
 optimizer: Adam
-scheduler: OneCycleLR
+scheduler: CosineAnnealingLR
 patience: 20
 seed: 42
 resume_from: 

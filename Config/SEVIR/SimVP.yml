@@ -5,8 +5,8 @@ model:
   translator_type: IncepU
   hid_channels_S: 64
   hid_channels_T: 256
-  layers_S: 4
-  layers_T: 3
+  layers_S: 2
+  layers_T: 4
   # IncepU所需参数
   inception_kernels: [3, 5, 7, 11]
   groups: 8
@@ -18,11 +18,11 @@ model:
 
 # 训练参数
 epochs: 150
-lr: 0.005
+lr: 0.001
 max_lr: 0.01
 optimizer: Adam
 scheduler: OneCycleLR
-patience: 20
+patience: 15
 seed: 42
 resume_from: 
 
