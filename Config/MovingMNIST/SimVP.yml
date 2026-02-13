@@ -1,12 +1,20 @@
 # 模型参数
 model:
-  input_shape: [10, 1, 128, 128]
+  input_shape: [10, 1, 64, 64]
+  # 可选的translator_type有"IncepU"、"gSTA"和"TAU"，分别对应SimVP的V1、V2和V3版本
+  translator_type: IncepU
   hid_channels_S: 64
   hid_channels_T: 512
   layers_S: 4
-  layers_T: 4
+  layers_T: 8
+  # IncepU所需参数
   inception_kernels: [3, 5, 7, 11]
   groups: 8
+  # gSTA和TAU所需参数
+  kernel_size: 21
+  mlp_ratio: 8
+  drop_ratio: 0
+  drop_path_prob: 0.1
 
 # 训练参数
 epochs: 200
