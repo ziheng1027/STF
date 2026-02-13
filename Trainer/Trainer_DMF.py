@@ -88,7 +88,7 @@ class Trainer_DMF(Trainer_Base):
         else:
             start_epoch = 1
             # 仅在新的一轮训练开始时记录模型配置
-            self.logger.log_config(self.model_config)
+            self.logger.log_config(self.model_config.get("model", {}))
 
         # 模型训练-主循环
         for epoch in range(start_epoch, self.model_config["epochs"] + 1):

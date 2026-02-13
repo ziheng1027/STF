@@ -96,6 +96,7 @@ class Trainer_IMF(Trainer_Base):
             start_epoch = current_epoch + 1
         else:
             start_epoch = 1
+            self.logger.log_config(self.model_config.get("model", {}))
         
         # 模型训练-主循环
         for epoch in range(start_epoch, self.model_config["epochs"] + 1):
