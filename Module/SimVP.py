@@ -8,20 +8,22 @@ from Module.Attention.LKA import SpatialGatingAttention, TemporalAttention, init
 
 class BasicConv(nn.Module):
     """用于构建Encoder/Decoder的组件"""
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, is_transpose, is_norm_act):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, is_upsample, use_norm_act):
         super().__init__()
 
-        self.is_norm_act = is_norm_act
-        # 选择使用普通卷积还是反卷积
-        if is_transpose:
-            # 使用反卷积
-            self.conv = nn.ConvTranspose2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                output_padding=stride // 2
+        self.use_norm_act = use_norm_act
+        # 是否上采样
+        if is_upsample:
+            # 使用反卷积/PixelShuffle
+            self.conv = nn.Sequential(
+                nn.Conv2d(
+                    in_channels,
+                    out_channels * 4,  # PixelShuffle需要4倍的通道数
+                    kernel_size=kernel_size,
+                    stride=1,
+                    padding=padding
+                ),
+                nn.PixelShuffle(2)
             )
         else:
             # 使用普通卷积
@@ -40,29 +42,29 @@ class BasicConv(nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        if self.is_norm_act:
+        if self.use_norm_act:
             x = self.norm(x)
-            x = self._func(x)
+            x = self.act_func(x)
         # print("BasicConv输出形状: ", x.shape)
         return x
 
 
 class SpatialConv(nn.Module):
     """用于构建Encoder/Decoder的组件"""
-    def __init__(self, in_channels, out_channels, stride, is_transpose, is_norm_act):
+    def __init__(self, in_channels, out_channels, stride, is_upsample, use_norm_act):
         super().__init__()
 
-        # 如果步长为1,强制使用普通卷积(因为步长为1的反卷积和普通卷积效果相同,但计算量更大)
+        # 如果步长为1, 使用普通卷积
         if stride == 1:
-            is_transpose = False
+            is_upsample = False
         self.conv = BasicConv(
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=3,
             stride=stride,
             padding=1,
-            is_transpose=is_transpose,
-            is_norm_act=is_norm_act
+            is_upsample=is_upsample,
+            use_norm_act=use_norm_act
         )
 
     def forward(self, x):
@@ -73,10 +75,10 @@ class SpatialConv(nn.Module):
 
 class GroupConv(nn.Module):
     """用于构建InceptionBlock的组件"""
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, groups, is_norm_act):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, groups, use_norm_act):
         super().__init__()
 
-        self.is_norm_act = is_norm_act
+        self.use_norm_act = use_norm_act
         # 如果"通道数"不能够被"分组数"整除,则将"分组数"设置为1
         if in_channels % groups != 0:
             groups = 1
@@ -96,7 +98,7 @@ class GroupConv(nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        if self.is_norm_act:
+        if self.use_norm_act:
             x = self.norm(x)
             x = self.act_func(x)
         # print("GroupConv输出形状: ", x.shape)
@@ -125,7 +127,7 @@ class InceptionBlock(nn.Module):
                     stride=1,
                     padding=kernel_size // 2,
                     groups=groups,
-                    is_norm_act=True
+                    use_norm_act=True
                 )
             )
         # 将多个分组卷积模块组合成一个Sequential
@@ -146,7 +148,6 @@ class ChannelMixer(nn.Module):
         super().__init__()
 
         hid_channels = int(in_channels * mlp_ratio)
-        out_channels = out_channels or in_channels
         
         # 1x1卷积升维, 将通道信息投影到更高维度空间
         self.fc1 = nn.Conv2d(in_channels, hid_channels, kernel_size=1)
@@ -188,19 +189,28 @@ class ChannelMixer(nn.Module):
 
 class GABlock(nn.Module):
     """gSTA块"""
-    def __init__(self, hid_channels, kernel_size=21, mlp_ratio=4, drop_ratio=0, drop_path_prob=0.1):
+    def __init__(self, in_channels, out_channels=None, kernel_size=21, mlp_ratio=4, drop_ratio=0, drop_path_prob=0.1):
         super().__init__()
 
-        self.norm1 = nn.BatchNorm2d(hid_channels)
-        self.attn = SpatialGatingAttention(hid_channels, kernel_size, True)
+        out_channels = out_channels or in_channels
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        self.norm1 = nn.BatchNorm2d(in_channels)
+        self.attn = SpatialGatingAttention(in_channels, kernel_size, True)
         self.drop_path = DropPath(drop_path_prob) if drop_path_prob > 0.0 else nn.Identity()
 
-        self.norm2 = nn.BatchNorm2d(hid_channels)
-        self.mixer = ChannelMixer(hid_channels, mlp_ratio, drop_ratio)
+        self.norm2 = nn.BatchNorm2d(in_channels)
+        self.mixer = ChannelMixer(in_channels, out_channels, mlp_ratio, drop_ratio)
 
         # LayerScale参数: 初始值0.01有助于稳定深层网络的训练
-        self.layerscale1 = nn.Parameter(1e-2 * torch.ones((hid_channels)), requires_grad=True)
-        self.layerscale2 = nn.Parameter(1e-2 * torch.ones((hid_channels)), requires_grad=True)
+        self.layerscale1 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
+        self.layerscale2 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
+
+        # 维度投影层: 如果输入和输出维度不同, 进行1x1卷积投影
+        if in_channels != out_channels:
+            self.proj = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+
         self.apply(init_weights)
     
     def forward(self, x):
@@ -209,23 +219,34 @@ class GABlock(nn.Module):
         
         x = x + self.drop_path(layerscale1 * self.attn(self.norm1(x)))
         x = x + self.drop_path(layerscale2 * self.mixer(self.norm2(x)))
+        
+        if self.in_channels != self.out_channels:
+            x = self.proj(x)
         return x
 
 
 class TABlock(nn.Module):
     """TAU块, 结构和gSTA相同, 但使用TemporalAttention替换SpatialGatingAttention"""
-    def __init__(self, hid_channels, kernel_size=21, mlp_ratio=4, drop_ratio=0, drop_path_prob=0.1):
+    def __init__(self, in_channels, out_channels=None, kernel_size=21, mlp_ratio=4, drop_ratio=0, drop_path_prob=0.1):
         super().__init__()
 
-        self.norm1 = nn.BatchNorm2d(hid_channels)
-        self.attn = TemporalAttention(hid_channels, kernel_size, True)
+        out_channels = out_channels or in_channels
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        self.norm1 = nn.BatchNorm2d(in_channels)
+        self.attn = TemporalAttention(in_channels, kernel_size, True)
         self.drop_path = DropPath(drop_path_prob) if drop_path_prob > 0.0 else nn.Identity()
 
-        self.norm2 = nn.BatchNorm2d(hid_channels)
-        self.mixer = ChannelMixer(hid_channels, mlp_ratio, drop_ratio)
+        self.norm2 = nn.BatchNorm2d(in_channels)
+        self.mixer = ChannelMixer(in_channels, mlp_ratio, drop_ratio)
 
-        self.layerscale1 = nn.Parameter(1e-2 * torch.ones((hid_channels)), requires_grad=True)
-        self.layerscale2 = nn.Parameter(1e-2 * torch.ones((hid_channels)), requires_grad=True)
+        self.layerscale1 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
+        self.layerscale2 = nn.Parameter(1e-2 * torch.ones((in_channels)), requires_grad=True)
+
+        if in_channels != out_channels:
+            self.proj = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+
         self.apply(init_weights)
     
     def forward(self, x):
@@ -234,58 +255,14 @@ class TABlock(nn.Module):
         
         x = x + self.drop_path(layerscale1 * self.attn(self.norm1(x)))
         x = x + self.drop_path(layerscale2 * self.mixer(self.norm2(x)))
+
+        if self.in_channels != self.out_channels:
+            x = self.proj(x)
         return x
 
 
-def stride_generator(num_layers, reverse=False):
-    strides = [1,2] * (num_layers // 2)
-    # 是否反转序列
-    if reverse:
-        return list(reversed(strides))
-    else:
-        return strides
-
-
-class Encoder(nn.Module):
-    def __init__(self, in_channels, hid_channels, encoder_layers):
-        super().__init__()
-        # 生成步长序列
-        strides = stride_generator(encoder_layers)
-        # 创建编码器层
-        self.encoder = nn.Sequential(
-            # 第一层单独处理,获取初始的输入通道,并且需要保存其输出用于跳跃连接
-            SpatialConv(
-                in_channels=in_channels,
-                out_channels=hid_channels,
-                stride=strides[0],
-                is_transpose=False,
-                is_norm_act=True
-            ),
-            # 后续层
-            *[
-                SpatialConv(
-                    in_channels=hid_channels,
-                    out_channels=hid_channels,
-                    stride=stride,
-                    is_transpose=False,
-                    is_norm_act=True
-                ) for stride in strides[1:]
-            ]
-        )
-
-    def forward(self, x):
-        # 保存第一层输出用于跳跃连接
-        enc1 = self.encoder[0](x)
-        x = enc1
-        # 后续层
-        for i in range(1, len(self.encoder)):
-            x = self.encoder[i](x)
-        # 返回最终特征以及用于跳跃连接的特征
-        # print("Encoder输出形状: ", x.shape)
-        return x, enc1
-
-
-class Translator(nn.Module):
+class InceptionTranslator(nn.Module):
+    """SimVP-V1版(IncepU)的时序转换器"""
     def __init__(self, in_channels, hid_channels, translator_layers, kernel_sizes=[3, 5, 7, 11], groups=8):
         super().__init__()
         self.translator_layers = translator_layers
@@ -380,9 +357,178 @@ class Translator(nn.Module):
         x = x.reshape(B, T, C, H, W)
         # print("Translator输出形状: ", x.shape)
         return x
+
+
+class GATranslator(nn.Module):
+    """SimVP-V2版(gSTA)的时序转换器"""
+    def __init__(self, in_channels, hid_channels, translator_layers, drop_path_prob=0.1, **kwargs):
+        super().__init__()
+
+        self.translator_layers = translator_layers
+        drop_path_ratio = [x.item() for x in torch.linspace(1e-2, drop_path_prob, translator_layers)]
+
+        blocks = []
+        # 第一层
+        blocks.append(
+            GABlock(
+                in_channels=in_channels,
+                out_channels=hid_channels,
+                drop_path_prob=drop_path_ratio[0],
+                **kwargs
+            )
+        )
+        # 中间层
+        for i in range(1, translator_layers - 1):
+            blocks.append(
+                GABlock(
+                    in_channels=hid_channels,
+                    out_channels=hid_channels,
+                    drop_path_prob=drop_path_ratio[i],
+                    **kwargs
+                )
+            )
+        # 最后一层
+        blocks.append(
+            GABlock(
+                in_channels=hid_channels,
+                out_channels=in_channels,
+                drop_path_prob=drop_path_ratio[-1],
+                **kwargs
+            )
+        )
+        self.blocks = nn.ModuleList(blocks)
     
+    def forward(self, x):
+        B, T, C, H, W = x.shape
+        x = x.reshape(B, T*C, H, W)
+
+        for block in self.blocks:
+            x = block(x)
+        x = x.reshape(B, T, C, H, W)
+        # print("Translator输出形状: ", x.shape)
+        return x
+
+
+class TATranslator(nn.Module):
+    """SimVP-V3版(TAU)的时序转换器"""
+    def __init__(self, in_channels, hid_channels, translator_layers, drop_path_prob=0.1, **kwargs):
+        super().__init__()
+
+        self.translator_layers = translator_layers
+        drop_path_ratio = [x.item() for x in torch.linspace(1e-2, drop_path_prob, translator_layers)]
+
+        blocks = []
+        # 第一层
+        blocks.append(
+            TABlock(
+                in_channels=in_channels,
+                out_channels=hid_channels,
+                drop_path_prob=drop_path_ratio[0],
+                **kwargs
+            )
+        )
+        # 中间层
+        for i in range(1, translator_layers - 1):
+            blocks.append(
+                TABlock(
+                    in_channels=hid_channels,
+                    out_channels=hid_channels,
+                    drop_path_prob=drop_path_ratio[i],
+                    **kwargs
+                )
+            )
+        # 最后一层
+        blocks.append(
+            TABlock(
+                in_channels=hid_channels,
+                out_channels=in_channels,
+                drop_path_prob=drop_path_ratio[-1],
+                **kwargs
+            )
+        )
+        self.blocks = nn.ModuleList(blocks)
+    
+    def forward(self, x):
+        B, T, C, H, W = x.shape
+        x = x.reshape(B, T*C, H, W)
+
+        for block in self.blocks:
+            x = block(x)
+        x = x.reshape(B, T, C, H, W)
+        # print("Translator输出形状: ", x.shape)
+        return x
+
+
+def stride_generator(num_layers, reverse=False):
+    strides = [1,2] * (num_layers // 2)
+    # 是否反转序列
+    if reverse:
+        return list(reversed(strides))
+    else:
+        return strides
+
+
+class Encoder(nn.Module):
+    """Encoder"""
+    def __init__(self, in_channels, hid_channels, encoder_layers):
+        super().__init__()
+        # 生成步长序列
+        strides = stride_generator(encoder_layers)
+        # 创建编码器层
+        self.encoder = nn.Sequential(
+            # 第一层单独处理,获取初始的输入通道,并且需要保存其输出用于跳跃连接
+            SpatialConv(
+                in_channels=in_channels,
+                out_channels=hid_channels,
+                stride=strides[0],
+                is_upsample=False,
+                use_norm_act=True
+            ),
+            # 后续层
+            *[
+                SpatialConv(
+                    in_channels=hid_channels,
+                    out_channels=hid_channels,
+                    stride=stride,
+                    is_upsample=False,
+                    use_norm_act=True
+                ) for stride in strides[1:]
+            ]
+        )
+
+    def forward(self, x):
+        # 保存第一层输出用于跳跃连接
+        enc1 = self.encoder[0](x)
+        x = enc1
+        # 后续层
+        for i in range(1, len(self.encoder)):
+            x = self.encoder[i](x)
+        # 返回最终特征以及用于跳跃连接的特征
+        # print("Encoder输出形状: ", x.shape)
+        return x, enc1
+
+
+class Translator(nn.Module):
+    """Translator模块, 根据版本选择不同的Translator"""
+    def __init__(self, translator_type, in_channels, hid_channels, translator_layers, **kwargs):
+        super().__init__()
+
+        translator_type = translator_type.lower()
+        if translator_type == 'incepu':
+            self.translator = InceptionTranslator(in_channels, hid_channels, translator_layers, **kwargs)
+        elif translator_type == 'gsta':
+            self.translator = GATranslator(in_channels, hid_channels, translator_layers, **kwargs)
+        elif translator_type == 'tau':
+            self.translator = TATranslator(in_channels, hid_channels, translator_layers, **kwargs)
+        else:
+            raise ValueError(f"不支持的Translator类型: {translator_type}")
+
+    def forward(self, x):
+        return self.translator(x)
+
 
 class Decoder(nn.Module):
+    """Decoder"""
     def __init__(self, hid_channels, out_channels, decoder_layers):
         super().__init__()
         # 获取反转的步长序列
@@ -394,17 +540,17 @@ class Decoder(nn.Module):
                     in_channels=hid_channels,
                     out_channels=hid_channels,
                     stride=stride,
-                    is_transpose=True,
-                    is_norm_act=True
+                    is_upsample=True,
+                    use_norm_act=True
                 ) for stride in strides[:-1]
             ],
             # 最后一层处理跳跃连接
             SpatialConv(
-                in_channels=hid_channels * 2,
-                out_channels=hid_channels,
+                in_channels=hid_channels,
+                out_channels=hid_channels, # 如果采用cat连接, 则需要将输入通道数翻倍; 如果采用相加, 则保持不变
                 stride=strides[-1],
-                is_transpose=True,
-                is_norm_act=True
+                is_upsample=True,
+                use_norm_act=True
             )
         )
         # 最终输出层1x1卷积
@@ -419,8 +565,8 @@ class Decoder(nn.Module):
         for i in range(len(self.decoder) - 1):
             x = self.decoder[i](x)
         # 最后一层处理跳跃连接
-        x = torch.cat([x, enc1], dim=1)
-        x = self.decoder[-1](x)
+        # x = torch.cat([x, enc1], dim=1)
+        x = self.decoder[-1](x + enc1)
         # 最终输出层1x1卷积
         x = self.out(x)
         # print("Decoder输出形状: ", x.shape)

@@ -4,8 +4,8 @@ from Module.SimVP import Encoder, Translator, Decoder
 
 
 class SimVP(nn.Module):
-    def __init__(self, input_shape, hid_channels_S=64, hid_channels_T=256, 
-                 layers_S=4, layers_T=8, inception_kernels=[3, 5, 7, 11], groups=8):
+    def __init__(self, input_shape, translator_type="IncepU", hid_channels_S=64, hid_channels_T=256, 
+                 layers_S=4, layers_T=8, inception_kernels=[3, 5, 7, 11], groups=8, **kwargs):
             super().__init__()
 
             T, C, H, W = input_shape
@@ -17,11 +17,13 @@ class SimVP(nn.Module):
                 encoder_layers=layers_S
             )
             self.translator = Translator(
+                translator_type=translator_type,
                 in_channels=T * hid_channels_S,
                 hid_channels=hid_channels_T,
                 translator_layers=layers_T,
                 kernel_sizes=inception_kernels,
-                groups=groups
+                groups=groups,
+                **kwargs
             )
             self.decoder = Decoder(
                 hid_channels=hid_channels_S,
