@@ -26,5 +26,5 @@ seed: 42
 resume_from: 
 
 # 测试参数
-model_path: Output\Checkpoint\TaxiBJ\PredRNN_epoch=31_loss=0.0003.pt
+model_path: 
 save_interval: 10

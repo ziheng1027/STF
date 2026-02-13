@@ -18,5 +18,5 @@ seed: 42
 resume_from: 
 
 # 测试参数
-model_path: Output\Checkpoint\SEVIR\SmaAtUNet_epoch=72_loss=0.0047.pt
+model_path: 
 save_interval: 10
