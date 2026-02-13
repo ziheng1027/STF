@@ -4,7 +4,7 @@ import math
 import torch
 import random
 import numpy as np
-import torch as nn
+import torch.nn as nn
 import matplotlib.pyplot as plt
 
 
@@ -103,9 +103,9 @@ def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=
     
     return mask_patched
 
-def drop_path(x, drop_prob=0, is_train=False, scale_by_keep=True):
+def drop_path(x, drop_prob=0, training=False, scale_by_keep=True):
     """Stochastic Depth, 在训练深度网络时随机丢弃残差块的主路径，从而减少过拟合并提升泛化能力"""
-    if drop_prob == 0. or not is_train:
+    if drop_prob == 0. or not training:
         return x
     
     keep_prob = 1 - drop_prob
@@ -130,7 +130,7 @@ class DropPath(nn.Module):
         self.scale_by_keep = scale_by_keep
     
     def forward(self, x):
-        return drop_path(x, self.drop_prob, self.is_trian, self.scale_by_keep)
+        return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
     
     def extra_repr(self):
         return f"drop_prob={round(self.drop_prob, 3): 0.3f}"
