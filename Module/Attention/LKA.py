@@ -134,12 +134,12 @@ class TemporalAttentionModule(nn.Module):
         # 此处输出维度为dim, 不再split
         self.conv1 = nn.Conv2d(hid_channels, hid_channels, kernel_size=1)
         # SE通道注意力模块: 捕捉不同时间步/通道的重要性
-        hid_channels_zip = max(hid_channels // reduction, 4)
+        reduction = max(hid_channels // reduction, 4)
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Sequential(
-            nn.Linear(hid_channels, hid_channels_zip, bias=False),
+            nn.Linear(hid_channels, hid_channels // reduction, bias=False),
             nn.ReLU(True),
-            nn.Linear(hid_channels_zip, hid_channels, bias=False),
+            nn.Linear(hid_channels // reduction, hid_channels, bias=False),
             nn.Sigmoid()
         )
     
