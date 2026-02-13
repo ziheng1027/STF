@@ -80,7 +80,7 @@ class Trainer_Base:
         elif scheduler_name == "OneCycleLR":
             scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
-                max_lr=self.model_config.get("max_lr", 0.08),
+                max_lr=self.model_config.get("lr", 0.01),
                 epochs=self.model_config.get("epochs", 100),
                 steps_per_epoch=len(self.train_loader)
             )
