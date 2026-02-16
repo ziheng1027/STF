@@ -214,35 +214,49 @@ def visualize_base(idx, input, target, output):
     plt.figure(figsize=(15, 9))
     # input
     for t in range(T):
-        plt.subplot(4, T, t+1)
-        plt.imshow(input[t, 0, :, :])
-        plt.tick_params(axis='both', which='both', length=0)
+        ax = plt.subplot(4, T, t+1)
+        im = plt.imshow(input[t, 0, :, :], cmap='viridis')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        plt.title(f"t={t+1}", fontsize=10)
+        if t == T - 1:
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         if t == 0:
-            plt.ylabel("input", rotation=0, labelpad=20, ha='right', va='center')
+            plt.ylabel("input", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
     # target
     for t in range(T):
-        plt.subplot(4, T, t+1+T)
-        plt.imshow(target[t, 0, :, :])
-        plt.tick_params(axis='both', which='both', length=0)
+        ax = plt.subplot(4, T, t+1+T)
+        im = plt.imshow(target[t, 0, :, :], cmap='viridis')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        plt.title(f"t={T+t+1}", fontsize=10)
+        if t == T - 1:
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         if t == 0:
-            plt.ylabel("target", rotation=0, labelpad=20, ha='right', va='center')
+            plt.ylabel("target", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
     # output
     for t in range(T):
-        plt.subplot(4, T, t+1+2*T)
-        plt.imshow(output[t, 0, :, :])
-        plt.tick_params(axis='both', which='both', length=0)
+        ax = plt.subplot(4, T, t+1+2*T)
+        im = plt.imshow(output[t, 0, :, :], cmap='viridis')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        if t == T - 1:
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         if t == 0:
-            plt.ylabel("output", rotation=0, labelpad=20, ha='right', va='center')
+            plt.ylabel("output", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
     # error
     for t in range(T):
-        plt.subplot(4, T, t+1+3*T)
-        plt.imshow(output[t, 0, :, :] - target[t, 0, :, :])
-        plt.tick_params(axis='both', which='both', length=0)
+        ax = plt.subplot(4, T, t+1+3*T)
+        im = plt.imshow(output[t, 0, :, :] - target[t, 0, :, :], cmap='viridis')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        if t == T - 1:
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         if t == 0:
-            plt.ylabel("error", rotation=0, labelpad=20, ha='right', va='center')
-    
+            plt.ylabel("error", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
+
     plt.suptitle(f"|-Sample {idx}-|", y=0.98, fontsize=16)
-    plt.tight_layout()
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.93, bottom=0.05, wspace=0.2, hspace=0.2)
     plt.show()
 
 def visualize_figure(model_name, dataset_name):
