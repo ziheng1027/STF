@@ -219,7 +219,6 @@ def visualize_base(idx, input, target, output):
         plt.tick_params(axis='both', which='both', length=0)
         if t == 0:
             plt.ylabel("input", rotation=0, labelpad=20, ha='right', va='center')
-        plt.axis('off')
     # target
     for t in range(T):
         plt.subplot(4, T, t+1+T)
