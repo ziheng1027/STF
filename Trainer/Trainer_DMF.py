@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from Trainer.Trainer_Base import Trainer_Base
-from Tool.Metric import cal_metrics
+from Tool.Metric import cal_metrics, count_parameters, format_params
 from Tool.Utils import plot_loss, save_test_samples
 
 
@@ -152,6 +152,10 @@ class Trainer_DMF(Trainer_Base):
             avg_metrics = {}
             for key in metrics:
                 avg_metrics[key] = round(np.mean(metrics[key]), 4)
-            
+
+            # 计算并添加参数量指标
+            total_params, trainable_params = count_parameters(self.model)
+            avg_metrics["params"] = format_params(total_params)
+
             self.logger.log_metrics(avg_metrics)
             

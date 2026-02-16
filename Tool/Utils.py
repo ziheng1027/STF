@@ -139,7 +139,6 @@ class DropPath(nn.Module):
         return f"drop_prob={round(self.drop_prob, 3): 0.3f}"
 
 
-
 """测试相关"""
 def save_test_samples(idx, input, target, output, model_name, sample_dir, interval):
     """保存测试样本以便可视化"""
@@ -187,6 +186,7 @@ def reshape_to_nchw(target, pred):
         raise ValueError(f"不支持的输入维度: {ndim}")
     
     return target_reshaped, pred_reshaped
+
 
 """可视化相关"""
 def plot_loss(train_losses, val_losses, model_name, dataset_name):

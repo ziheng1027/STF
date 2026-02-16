@@ -13,6 +13,20 @@ except ImportError:
     warnings.warn("LPIPS package not installed. Install with 'pip install lpips' for LPIPS metric support.")
 
 
+def count_parameters(model):
+    """计算模型的参数数量"""
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return total_params, trainable_params
+
+def format_params(params):
+    """将参数数量转换为可读格式(M/K)"""
+    if params >= 1_000_000:
+        return f"{params / 1_000_000:.2f}M"
+    elif params >= 1_000:
+        return f"{params / 1_000:.2f}K"
+    else:
+        return str(params)
 
 def cal_mse(target, pred):
     """计算均方误差, 期望输入shape为 (C, H, W)"""
