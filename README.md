@@ -37,6 +37,8 @@
 
 > 注: ↓表示越小越好，↑表示越大越好
 
+![SimVP Visualization](Output/Visualization/TaxiBJ/SimVP/Figure_1.png)
+
 ### SEVIR:
 - 运行download_sevir_vil.sh脚本之前, 请确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
 - 下载(bash): sh "Dataset\Download\download_sevir_vil.sh"
