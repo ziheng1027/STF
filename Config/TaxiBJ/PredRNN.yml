@@ -1,7 +1,7 @@
 # 模型参数
 model:
   input_channels: 2
-  num_hidden_channels: [64, 64, 64, 64]
+  num_hidden_channels: [128, 128, 128, 128]
   input_frames: 4
   output_frames: 4
   patch_size: 2
@@ -9,17 +9,18 @@ model:
   img_width: 32
   kernel_size: 5
   stride: 1
-  use_layer_norm: true
+  use_layer_norm: false
   reverse_scheduled_sampling: false
   model_version: "V1"  # 可以切换 "V1" 或 "V2"
 
 # 训练参数
 epochs: 200
-lr: 0.001
+lr: 0.0001
 optimizer: Adam
-scheduler: ReduceLROnPlateau
+scheduler: CosineAnnealingLR
 start_iter: 25000
 end_iter: 50000
+sampling_changing_rate: 0.00002
 aux_loss_weight: 0.1  # 辅助损失, 如PredRNN-V2 中的decouple loss, PhyDNet中的moment_loss等
 patience: 20
 seed: 42
