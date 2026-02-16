@@ -7,6 +7,36 @@
 - 下载(bash)：sh "Dataset\Download\download_moving_mnist.sh"
 ### TaxiBJ:
 - 下载(bash)：sh "Dataset\Download\download_taxibj.sh"
+- **模型配置与性能指标**:
+
+#### 模型配置
+
+| 模型 | 主要配置参数 |
+|------|-------------|
+| **PredRNN-V1** | input_channels=2, num_hidden_channels=[128,128,128,128], input_frames=4, output_frames=4, patch_size=2, kernel_size=5, reverse_scheduled_sampling=False |
+| **PredRNN-V2** | input_channels=2, num_hidden_channels=[128,128,128,128], input_frames=4, output_frames=4, patch_size=2, kernel_size=5, reverse_scheduled_sampling=True |
+| **UNet** | in_channels=2, out_channels=2, in_frames=4, out_frames=4, bilinear=True |
+| **SmaAtUNet** | in_channels=2, out_channels=2, in_frames=4, out_frames=4, num_kernel=2, reduction_ratio=16 |
+| **SimVP-V1** | input_shape=[4,2,32,32], translator_type=IncepU, hid_channels_S=32, hid_channels_T=256, layers_S=2, layers_T=8 |
+| **SimVP-V2** | input_shape=[4,2,32,32], translator_type=gSTA, hid_channels_S=32, hid_channels_T=256, layers_S=2, layers_T=8 |
+| **TAU** | input_shape=[4,2,32,32], translator_type=TAU, hid_channels_S=32, hid_channels_T=256, layers_S=2, layers_T=8 |
+| **STLight** | in_channels=8, out_channels=8, hid_channels=256, layers=16, patch_size=1 |
+
+#### 性能指标
+
+| 模型 | 参数量 | MSE ↓ | MAE ↓ | RMSE ↓ | PSNR ↑ | SSIM ↑ |
+|------|--------|-------|-------|--------|--------|--------|
+| **PredRNN-V1** | 23.66M | 0.3276 | 15.1447 | 0.5344 | 39.6018 | 0.9772 |
+| **PredRNN-V2** | 23.67M | 0.3654 | 15.29 | 0.5453 | 39.5338 | 0.9764 |
+| **UNet** | 17.27M | 0.3518 | 15.7073 | 0.5444 | 39.3579 | 0.9766 |
+| **SmaAtUNet** | 4.03M | 0.3798 | 16.3223 | 0.5657 | 39.0235 | 0.9736 |
+| **SimVP-V1** | 13.79M | 0.3229 | 15.3546 | 0.5342 | 39.5185 | 0.9766 |
+| **SimVP-V2** | 6.08M | 0.3026 | 14.8174 | 0.5182 | 39.7826 | 0.9790 |
+| **TAU** | 5.66M | 0.3003 | 15.0326 | 0.5198 | 39.7168 | 0.9787 |
+| **STLight** | 1.32M | 0.3338 | 15.319 | 0.5328 | 39.5448 | 0.9774 |
+
+> 注: ↓表示越小越好，↑表示越大越好
+
 ### SEVIR:
 - 运行download_sevir_vil.sh脚本之前, 请确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
 - 下载(bash): sh "Dataset\Download\download_sevir_vil.sh"
