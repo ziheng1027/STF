@@ -61,12 +61,12 @@ def unpatchify(img_patched, patch_size):
     )
     return img
 
-def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=20000, end_iters=50000, reverse=False):
+def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=25000, end_iters=50000, reverse=False, eta=1.0, sampling_changing_rate=0.00002):
     """计算Scheduled Sampling策略的概率阈值"""
     B, T, C, H, W = input_patched.shape
-    if end_iters <= start_iters: # prob < threshold => GT
+    if end_iters <= start_iters:
         raise ValueError("end_iters必须大于start_iters")
-    
+
     if reverse:
         # input部分概率从0.5指数增长到1.0
         if iters < start_iters:
@@ -75,7 +75,7 @@ def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=
             input_threshold = 1.0 - 0.5 * math.exp(-float(iters - start_iters) / (end_iters - start_iters))
         else:
             input_threshold = 1.0
-        
+
         # output部分概率从0.5线性衰减到0
         if iters < start_iters:
             output_threshold = 0.5
@@ -86,12 +86,15 @@ def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=
     else:
         # input部分概率始终为1.0
         input_threshold = 1.0
-        # output部分概率从1.0线性衰减到0
+
+        # output部分概率固定步长递减
         if iters < end_iters:
-            output_threshold = max(0.0, 1.0 - (1.0 / end_iters) * iters)
+            eta -= sampling_changing_rate
+            eta = max(0.0, eta)  # 确保不低于0
         else:
-            output_threshold = 0.0
-    
+            eta = 0.0
+        output_threshold = eta
+
     # 生成掩码
     mask_patched = torch.zeros((B, T - 1, 1, 1, 1), device=input_patched.device)
     random_prob = torch.rand((B, T - 1), device=input_patched.device)
@@ -100,8 +103,8 @@ def get_scheduled_sampling_mask(iters, input_patched, input_frames, start_iters=
     split_idx = input_frames - 1
     mask_patched[:, :split_idx] = (random_prob[:, :split_idx] < input_threshold).float().view(B, split_idx, 1, 1, 1)
     mask_patched[:, split_idx:] = (random_prob[:, split_idx:] < output_threshold).float().view(B, T - 1 - split_idx, 1, 1, 1)
-    
-    return mask_patched
+
+    return eta, mask_patched
 
 def drop_path(x, drop_prob=0, training=False, scale_by_keep=True):
     """Stochastic Depth, 在训练深度网络时随机丢弃残差块的主路径，从而减少过拟合并提升泛化能力"""

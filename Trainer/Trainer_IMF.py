@@ -20,13 +20,14 @@ class Trainer_IMF(Trainer_Base):
 
         # scheduled sampling 掩码生成
         B, T, C, H, W = input_patched.shape
-        mask_patched = get_scheduled_sampling_mask(
-            iters=self.steps, 
+        self.eta, mask_patched = get_scheduled_sampling_mask(
+            iters=self.steps,
             input_patched=input_patched,
             input_frames=self.model_config["model"]["input_frames"],
             start_iters=self.model_config["start_iter"],
             end_iters=self.model_config["end_iter"],
-            reverse=self.model_config["model"]["reverse_scheduled_sampling"]
+            reverse=self.model_config["model"]["reverse_scheduled_sampling"],
+            sampling_changing_rate=self.model_config["sampling_changing_rate"]
         )
 
         output_patched, aux_loss = self.model(input_patched, mask_patched)
