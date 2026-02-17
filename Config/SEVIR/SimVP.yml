@@ -6,7 +6,7 @@ model:
   hid_channels_S: 64
   hid_channels_T: 256
   layers_S: 4
-  layers_T: 4
+  layers_T: 6
   # IncepU所需参数
   inception_kernels: [3, 5, 7, 11]
   groups: 8
