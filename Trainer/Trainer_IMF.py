@@ -164,6 +164,6 @@ class Trainer_IMF(Trainer_Base):
 
             # 计算并添加参数量指标
             total_params, trainable_params = count_parameters(self.model)
-            avg_metrics["params"] = format_params(total_params)
+            avg_metrics["Params"] = format_params(total_params)
 
             self.logger.log_metrics(avg_metrics)
