@@ -3,7 +3,7 @@ MovingMNIST:
   data_path: "Data/MovingMNIST/train-images-idx3-ubyte.gz"
   input_frames: 10
   output_frames: 10
-  use_augment: True
+  use_augment: False
   batch_size_train: 16
   batch_size_valid: 4
   num_workers: 4
