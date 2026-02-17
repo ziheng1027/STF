@@ -1,6 +1,6 @@
 # STF
 
-一个新手向的时空预测框架: 时空预测, 视频序列预测, 雷达回波外推... 
+一个时空预测入门框架: 时空预测, 视频序列预测, 雷达回波外推... 
 
 ## 数据集
 ### MovingMNIST:
@@ -11,7 +11,7 @@
 
 #### 模型配置
 
-| 模型 | 主要配置参数 |
+| Model | Model Config |
 |------|-------------|
 | **PredRNN-V1** | input_channels=2, num_hidden_channels=[128,128,128,128], input_frames=4, output_frames=4, patch_size=2, kernel_size=5, reverse_scheduled_sampling=False |
 | **PredRNN-V2** | input_channels=2, num_hidden_channels=[128,128,128,128], input_frames=4, output_frames=4, patch_size=2, kernel_size=5, reverse_scheduled_sampling=True |
@@ -24,7 +24,7 @@
 
 #### 性能指标
 
-| 模型 | 参数量 | MSE ↓ | MAE ↓ | RMSE ↓ | PSNR ↑ | SSIM ↑ |
+| Model | Params | MSE ↓ | MAE ↓ | RMSE ↓ | PSNR ↑ | SSIM ↑ |
 |------|--------|-------|-------|--------|--------|--------|
 | **PredRNN-V1** | 23.66M | 0.3276 | 15.1447 | 0.5344 | 39.6018 | 0.9772 |
 | **PredRNN-V2** | 23.67M | 0.3654 | 15.29 | 0.5453 | 39.5338 | 0.9764 |
@@ -52,11 +52,6 @@
 - SmaAtUNet(PRL 2021)
 - SimVP(IncepU:CVPR 2022, gSTA:IEEE 2022, TAU:CVPR 2023)
 - STLight(WACV 2024)
-
-## 训练器
-- Trainer_Base: 训练器基类
-- Trainer_DMF: 直接多步预测训练器, 适合seq2seq结构的模型
-- Trainer_IMF: 迭代多步预测训练器, 适合自回归结构的模型
 
 ## 环境依赖
 python>=3.12, cuda>=12.x, pytorch>=2.6.0  
