@@ -8,6 +8,7 @@ import torchvision.transforms.functional as TF
 from torch import nn
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
+from Tool.Utils import worker_init_fn
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -86,7 +87,8 @@ def get_dataloader(train_data_path, test_data_path, batch_size_train, batch_size
         shuffle=True,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     valid_loader = DataLoader(
         valid_dataset,
@@ -94,7 +96,8 @@ def get_dataloader(train_data_path, test_data_path, batch_size_train, batch_size
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     test_loader = DataLoader(
         test_dataset,
@@ -102,7 +105,8 @@ def get_dataloader(train_data_path, test_data_path, batch_size_train, batch_size
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        worker_init_fn=worker_init_fn if num_workers > 0 else None
     )
     return train_loader, valid_loader, test_loader
 
