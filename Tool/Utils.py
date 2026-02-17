@@ -29,15 +29,15 @@ def set_seed(seed=42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def worker_init_fn(worker_id, base_seed=42):
+def worker_init_fn(worker_id):
     """DataLoader worker初始化函数, 确保每个worker有独立的随机种子"""
-    # 使用base_seed + worker_id来确保每个worker有不同但确定的随机性
-    worker_seed = base_seed + worker_id
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
-    torch.manual_seed(worker_seed)
+    seed = (torch.initial_seed() + worker_id) % (2**32)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed(worker_seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
 def patchify(img, patch_size):
         """将输入图像切分为patch, 然后将每个patch合并到通道维度"""
