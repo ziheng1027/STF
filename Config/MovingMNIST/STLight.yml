@@ -1,6 +1,6 @@
 # 模型参数
 model:
-  in_channels: 10
+  in_channels: 10  # 注意STLight的channels = T*C
   out_channels: 10
   hid_channels: 1024
   layers: 16
