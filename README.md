@@ -5,6 +5,38 @@
 ## 数据集
 ### MovingMNIST:
 - 下载(bash)：sh "Dataset\Download\download_moving_mnist.sh"
+- **模型配置与性能指标**:
+
+#### 模型配置
+
+| Model | Model Config |
+|------|-------------|
+| **PredRNN-V1** | input_channels=1, num_hidden_channels=[128,128,128,128], input_frames=10, output_frames=10, patch_size=4, kernel_size=5, reverse_scheduled_sampling=True |
+| **PredRNN-V2** | input_channels=1, num_hidden_channels=[128,128,128,128], input_frames=10, output_frames=10, patch_size=4, kernel_size=5, reverse_scheduled_sampling=True |
+| **UNet** | in_channels=1, out_channels=1, in_frames=10, out_frames=10, bilinear=True |
+| **SmaAtUNet** | in_channels=1, out_channels=1, in_frames=10, out_frames=10, num_kernel=2, reduction_ratio=16 |
+| **SimVP-V1** | input_shape=[10,1,64,64], translator_type=IncepU, hid_channels_S=64, hid_channels_T=512, layers_S=4, layers_T=8 |
+| **SimVP-V2** | input_shape=[10,1,64,64], translator_type=gSTA, hid_channels_S=64, hid_channels_T=512, layers_S=4, layers_T=8 |
+| **TAU** | input_shape=[10,1,64,64], translator_type=TAU, hid_channels_S=64, hid_channels_T=512, layers_S=4, layers_T=8 |
+| **STLight** | in_channels=10, out_channels=10, hid_channels=1024, layers=16, patch_size=2 |
+
+#### 性能指标
+
+| Model | Params | MSE ↓ | MAE ↓ | RMSE ↓ | PSNR ↑ | SSIM ↑ |
+|------|--------|-------|-------|--------|--------|--------|
+| **PredRNN-V1** | 23.84M | 25.4224 | 76.9728 | 4.9976 | 22.9966 | 0.9251 |
+| **PredRNN-V2** | 23.86M | 25.6829 | 77.4449 | 5.0228 | 22.9554 | 0.9264 |
+| **UNet** | 17.27M | 50.973 | 127.98 | 7.121 | 19.7168 | 0.8576 |
+| **SmaAtUNet** | 4.03M | 55.1125 | 137.735 | 7.407 | 19.3423 | 0.841 |
+| **SimVP-V1** | 57.95M | 32.6546 | 89.7017 | 5.6823 | 21.7713 | 0.9133 |
+| **SimVP-V2** | 46.77M | 27.2356 | 78.2131 | 5.1791 | 22.6811 | 0.9285 |
+| **TAU** | 44.66M | 26.4949 | 76.8922 | 5.1083 | 22.8022 | 0.9304 |
+| **STLight** | 17.89M | 23.1482 | 70.9686 | 4.7676 | 23.5775 | 0.9355 |
+
+> 注: ↓表示越小越好，↑表示越大越好；所有模型仅训练了200个epoch，SimVP类型和UNet类型均未触发早停机制
+
+![SimVP Visualization](ReadMe_Imgs/MovingMNIST.png)
+
 ### TaxiBJ:
 - 下载(bash)：sh "Dataset\Download\download_taxibj.sh"
 - **模型配置与性能指标**:
