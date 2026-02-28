@@ -1,13 +1,14 @@
 import yaml
-from Tool.Utils import get_trainer, visualize_figure, set_seed
+from Tool.Visualize import visualize_figure
+from Tool.Utils import get_trainer, set_seed
 
 
 # 训练哪个模型?
-model_name = "UNet"
+model_name = "SimVP"
 # 使用哪个数据集？
-dataset_name = "SEVIR"
+dataset_name = "TaxiBJ"
 # 选择哪个模式? "train", "test" or "visualize"
-mode = "test"
+mode = "visualize"
 
 
 if __name__ == '__main__':
