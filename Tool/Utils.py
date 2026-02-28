@@ -1,11 +1,9 @@
 # Tool/Utils.py
-import os
 import math
 import torch
 import random
 import numpy as np
 import torch.nn as nn
-import matplotlib.pyplot as plt
 
 
 """训练相关"""
@@ -186,97 +184,3 @@ def reshape_to_nchw(target, pred):
         raise ValueError(f"不支持的输入维度: {ndim}")
     
     return target_reshaped, pred_reshaped
-
-
-"""可视化相关"""
-def plot_loss(train_losses, val_losses, model_name, dataset_name):
-    """绘制训练和验证损失曲线"""
-    epochs = range(1, len(train_losses) + 1)
-    
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_losses, 'r-', label='Training Loss', linewidth=2)
-    plt.plot(epochs, val_losses, 'g-', label='Validation Loss', linewidth=2)
-    plt.title(f'{model_name} on {dataset_name} - Loss Curves', fontsize=14)
-    plt.xlabel('Epochs', fontsize=12)
-    plt.ylabel('Loss', fontsize=12)
-    plt.legend(fontsize=11)
-    plt.grid(True, alpha=0.3)
-    
-    # 保存图像
-    plt.savefig(f"Output/Visualization/{dataset_name}/{model_name}/loss_curve.pdf", dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    print(f"损失曲线已保存至: Output/Visualization/{dataset_name}/{model_name}/loss_curve.pdf")
-
-def visualize_base(idx, input, target, output):
-    """可视化"""
-    T, C, _, _ = target.shape
-    plt.figure(figsize=(15, 9))
-    # input
-    for t in range(T):
-        ax = plt.subplot(4, T, t+1)
-        im = plt.imshow(input[t, 0, :, :], cmap='viridis')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        plt.title(f"t={t+1}", fontsize=10)
-        if t == T - 1:
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        if t == 0:
-            plt.ylabel("input", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
-    # target
-    for t in range(T):
-        ax = plt.subplot(4, T, t+1+T)
-        im = plt.imshow(target[t, 0, :, :], cmap='viridis')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        plt.title(f"t={T+t+1}", fontsize=10)
-        if t == T - 1:
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        if t == 0:
-            plt.ylabel("target", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
-    # output
-    for t in range(T):
-        ax = plt.subplot(4, T, t+1+2*T)
-        im = plt.imshow(output[t, 0, :, :], cmap='viridis')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        if t == T - 1:
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        if t == 0:
-            plt.ylabel("output", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
-    # error
-    for t in range(T):
-        ax = plt.subplot(4, T, t+1+3*T)
-        im = plt.imshow(output[t, 0, :, :] - target[t, 0, :, :], cmap='viridis')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        if t == T - 1:
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        if t == 0:
-            plt.ylabel("error", rotation=90, labelpad=15, ha='center', va='center', fontsize=18)
-
-    plt.suptitle(f"|-Sample {idx}-|", y=0.98, fontsize=16)
-    plt.subplots_adjust(left=0.05, right=0.95, top=0.93, bottom=0.05, wspace=0.2, hspace=0.2)
-    plt.show()
-
-def visualize_figure(model_name, dataset_name):
-    """可视化为图像"""
-    dir = f"Output/Sample/{dataset_name}/{model_name}"
-    indices = set()
-    # 提取样本序号
-    for file in os.listdir(dir):
-        if file.endswith(".npy"):
-            idx = int(file.split("_")[1].split(".")[0])
-            indices.add(idx)
-    indices = sorted(list(indices))
-
-    for idx in indices:
-        sample = np.load(f"{dir}/{model_name}-sample_{idx}.npy", allow_pickle=True).item()
-        input = sample["input"]
-        target = sample["target"]
-        output = sample["output"]
-        visualize_base(idx, input, target, output)
-
-def visualize_gif():
-    """可视化为GIF"""
-    pass

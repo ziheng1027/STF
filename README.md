@@ -2,10 +2,24 @@
 
 一个时空预测入门框架: 时空预测, 视频序列预测, 雷达回波外推... 
 
+## 环境依赖
+python>=3.12, cuda>=12.x, pytorch>=2.6.0  
+1. pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128  
+2. pip install -r requirements.txt  
+
+## 模型
+- **ConvLSTM***(NIPS 2015)
+- **PredRNN**(V1:NIPS 2017, V2:IEEE 2022)
+- **PhyDNet**(CVPR 2020)
+- **UNet**(CVPR 2015)
+- **SmaAtUNet**(PRL 2021)
+- **SimVP**(IncepU:CVPR 2022, gSTA:IEEE 2022, TAU:CVPR 2023)
+- **STLight**(WACV 2024)
+
 ## 数据集
 ### MovingMNIST:
-- 下载(bash)：sh "Dataset\Download\download_moving_mnist.sh"
-- **模型配置与性能指标**:
+- **下载(bash):** sh "Dataset\Download\download_moving_mnist.sh"
+- **模型配置与性能指标:**
 
 #### 模型配置
 
@@ -33,13 +47,13 @@
 | **TAU** | 44.66M | 26.4949 | 76.8922 | 5.1083 | 22.8022 | 0.9304 |
 | **STLight** | 17.89M | 23.1482 | 70.9686 | 4.7676 | 23.5775 | 0.9355 |
 
-> 注: ↓表示越小越好，↑表示越大越好；所有模型仅训练了200个epoch，SimVP类型和UNet类型均未触发早停机制
+> **注:** ↓表示越小越好，↑表示越大越好；所有模型仅训练了200个epoch，SimVP类型和UNet类型均未触发早停机制
 
 ![SimVP Visualization](ReadMe_Imgs/MovingMNIST.png)
 
 ### TaxiBJ:
-- 下载(bash)：sh "Dataset\Download\download_taxibj.sh"
-- **模型配置与性能指标**:
+- **下载(bash):** sh "Dataset\Download\download_taxibj.sh"
+- **模型配置与性能指标:**
 
 #### 模型配置
 
@@ -72,32 +86,54 @@
 ![SimVP Visualization](ReadMe_Imgs/TaxiBJ.png)
 
 ### SEVIR:
-- 运行download_sevir_vil.sh脚本之前, 请确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
-- 下载(bash): sh "Dataset\Download\download_sevir_vil.sh"
-- SEVIR数据处理可移步: https://github.com/ziheng1027/SEVIR/tree/main
+- **下载(bash):** sh "Dataset\Download\download_sevir_vil.sh"
+- **前置条件:** 运行download_sevir_vil.sh脚本之前, 请确保已安装AWS CLI: https://docs.aws.amazon.com/zh_cn/cli/latest/userguide/getting-started-install.html
+- **SEVIR数据处理:** https://github.com/ziheng1027/SEVIR/tree/main
+- **模型配置与性能指标:**
 
-## 模型
-- ConvLSTM*(NIPS 2015)
-- PredRNN(V1:NIPS 2017, V2:IEEE 2022)
-- PhyDNet(CVPR 2020)
-- UNet(CVPR 2015)
-- SmaAtUNet(PRL 2021)
-- SimVP(IncepU:CVPR 2022, gSTA:IEEE 2022, TAU:CVPR 2023)
-- STLight(WACV 2024)
+#### 模型配置
 
-## 环境依赖
-python>=3.12, cuda>=12.x, pytorch>=2.6.0  
-1. pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128  
-2. pip install -r requirements.txt  
+| Model | Model Config |
+|------|-------------|
+| **PredRNN-V1** | input_channels=1, num_hidden_channels=[128,128,128,128], input_frames=7, output_frames=6, patch_size=8, kernel_size=5, reverse_scheduled_sampling=False |
+| **PredRNN-V2** | input_channels=1, num_hidden_channels=[128,128,128,128], input_frames=7, output_frames=6, patch_size=8, kernel_size=5, reverse_scheduled_sampling=True |
+| **UNet** | in_channels=1, out_channels=1, in_frames=7, out_frames=6, bilinear=True |
+| **SmaAtUNet** | in_channels=1, out_channels=1, in_frames=7, out_frames=6, num_kernel=2, reduction_ratio=16 |
+| **SimVP-V1** | input_shape=[7,1,128,128], translator_type=IncepU, hid_channels_S=64, hid_channels_T=256, layers_S=4, layers_T=6 |
+| **SimVP-V2** | input_shape=[7,1,128,128], translator_type=gSTA, hid_channels_S=64, hid_channels_T=256, layers_S=4, layers_T=6 |
+| **TAU** | input_shape=[7,1,128,128], translator_type=TAU, hid_channels_S=64, hid_channels_T=256, layers_S=4, layers_T=6 |
+| **STLight** | in_channels=7, out_channels=6, hid_channels=512, layers=16, patch_size=4 |
 
-## 运行说明
-- Config目录包含模型配置文件(以数据集名称组织), 数据集配置文件以及指标配置文件(不同数据集可选择不同指标)
-- 配置完成后, 在main脚本中指定model_name, dataset_name, mode=train开始训练
-- 训练完成后, 打开Config中的模型配置文件, 将训练好的模型文件路径填入model_path, 然后在main脚本中选择mode=test开始测试
-- test时可指定save_interval来规定样本保存间隔, test后可选择mode=visualize来可视化已保存的样本
-- 输出统一存放在Output目录下, 包含训练完成的最佳模型文件, 训练日志, 训练损失曲线, 测试样本, 可视化等内容
-- 参数说明: 
-    - patience: 早停耐心值, 当超过多少个epoch没有提升时停止训练
+#### 性能指标
+
+| Model | Params | MSE ↓ | MAE ↓ | Precision ↑ | Recall ↑ | F1 ↑ | Accuracy ↑ | FAR ↓ | CSI ↑ | HSS ↑ |
+|------|--------|-------|-------|-------------|----------|------|------------|-------|-------|-------|
+| **PredRNN-V1** | 28.85M | 102.78 | 618.525 | 0.7282 | 0.7421 | 0.7299 | 0.9462 | 0.0337 | 0.5885 | 0.6983 |
+| **PredRNN-V2** | 28.87M | 81.5994 | 535.471 | 0.7976 | 0.7048 | 0.741 | 0.9521 | 0.0227 | 0.6028 | 0.7132 |
+| **UNet** | 17.27M | 74.7094 | 502.168 | 0.8193 | 0.7129 | 0.7547 | 0.955 | 0.021 | 0.62 | 0.7286 |
+| **SmaAtUNet** | 4.03M | 75.0876 | 502.901 | 0.8153 | 0.7178 | 0.756 | 0.955 | 0.0216 | 0.6214 | 0.7298 |
+| **SimVP-V1** | 11.76M | 73.25 | 497.939 | 0.814 | 0.728 | 0.7612 | 0.9558 | 0.0224 | 0.6282 | 0.7353 |
+| **SimVP-V2** | 7.28M | 73.6464 | 488.54 | 0.8194 | 0.7214 | 0.7606 | 0.9558 | 0.021 | 0.6268 | 0.7349 |
+| **TAU** | 6.80M | 74.4695 | 499.356 | 0.8048 | 0.7327 | 0.761 | 0.955 | 0.0233 | 0.627 | 0.7347 |
+| **STLight** | 4.79M | 76.2394 | 516.638 | 0.8084 | 0.721 | 0.7545 | 0.9546 | 0.0228 | 0.6202 | 0.728 |
+
+> **注:** ↓表示越小越好，↑表示越大越好
+
+![SimVP Visualization](ReadMe_Imgs/SEVIR.png)
+
+## 运行
+1. **配置:** 模型&数据集&评估指标:  
+    - 模型配置文件(以数据集名称组织)
+    - 数据集配置文件
+    - 指标配置文件(不同数据集可选择不同指标)
+2. **训练:** 在main脚本中指定model_name, dataset_name, mode进行训练
+    - mode=train: 训练模型, 训练好的最佳模型保存在Output/Checkpoint目录, 训练日志记录在Output/Log目录, Loss曲线保存在Output/Visualization目录
+3. **测试:** 打开Config中的模型配置文件, 将训练好的模型路径填入model_path, 然后在main脚本中指定model_name, dataset_name, mode进行测试
+    - mode=test: 测试模型性能, 可指定save_interval采样保存样本数据, 样本数据保存在Output/Sample目录, 测试指标记录在Output/Log目录
+4. **可视化:** 在main脚本中指定model_name, dataset_name, mode进行可视化
+    - mode=visualize: 可视化Output/Sample目录下的样本数据
+5. **参数说明:**
+    - patience: 早停耐心值, 当超过多少个epoch没有提升valid loss时停止训练
     - resume_from: 断点续训, 意外中断训练时, 将当前最新的模型路径填入可以重新接着训练
-    - model_path: 模型路径, 用于test模式测试指定模型的性能指标
+    - model_path: 模型路径, 用于测试(mode=test)
     - save_interval: test模式下样本保存的间隔
