@@ -26,5 +26,5 @@ seed: 42
 resume_from: 
 
 # 测试参数
-model_path: 
-save_interval: 10
+model_path: Output\Checkpoint\SEVIR\SimVP+IncepU_epoch=68_loss=0.0046.pt
+save_interval: 1

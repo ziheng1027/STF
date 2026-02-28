@@ -2,7 +2,7 @@
 model:
   in_channels: 7  # 注意STLight的channels = T*C
   out_channels: 6
-  hid_channels: 1024
+  hid_channels: 512
   layers: 16
   patch_size: 4
   overlapping: 0
@@ -21,4 +21,4 @@ resume_from:
 
 # 测试参数
 model_path: 
-save_interval: 16
+save_interval: 1

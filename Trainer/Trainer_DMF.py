@@ -4,8 +4,9 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from Trainer.Trainer_Base import Trainer_Base
+from Tool.Visualize import plot_loss
 from Tool.Metric import cal_metrics, count_parameters, format_params
-from Tool.Utils import plot_loss, save_test_samples
+from Tool.Utils import save_test_samples
 
 
 class Trainer_DMF(Trainer_Base):
@@ -146,8 +147,9 @@ class Trainer_DMF(Trainer_Base):
                 for key in metrics:
                     if key in metrics_batch:
                         metrics[key].append(metrics_batch[key])
-                
-                sample_idx = save_test_samples(sample_idx, input, target, output, self.model_name, self.dirs['sample'], interval=64)
+                        
+                save_interval = self.model_config.get("save_interval", 10)
+                sample_idx = save_test_samples(sample_idx, input, target, output, self.model_name, self.dirs['sample'], interval=save_interval)
             
             avg_metrics = {}
             for key in metrics:

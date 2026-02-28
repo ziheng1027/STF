@@ -9,8 +9,8 @@ model:
   img_width: 128
   kernel_size: 5
   stride: 1
-  use_layer_norm: false
-  reverse_scheduled_sampling: false
+  use_layer_norm: true
+  reverse_scheduled_sampling: false  # V2中引入的反向采样策略, 训练过程中逐渐增加使用模型预测结果作为输入的概率
   model_version: "V1"  # 可以切换 "V1" 或 "V2"
 
 # 训练参数
@@ -28,4 +28,4 @@ resume_from:
 
 # 测试参数
 model_path: 
-save_interval: 10
+save_interval: 1

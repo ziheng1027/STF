@@ -17,4 +17,4 @@ resume_from:
 
 # 测试参数
 model_path: 
-save_interval: 10
+save_interval: 1
